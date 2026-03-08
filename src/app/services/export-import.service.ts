@@ -1,8 +1,8 @@
-import { Injectable, inject } from '@angular/core';
-import { IsinService } from './isin.service';
-import { EventsService } from './events.service';
-import { Isin } from '../models/isin.model';
-import { FinancialEvent } from '../models/financial-event.model';
+import { Injectable, inject } from "@angular/core";
+import { IsinService } from "./isin.service";
+import { EventsService } from "./events.service";
+import { Isin } from "../models/isin.model";
+import { FinancialEvent } from "../models/financial-event.model";
 
 export interface GringotsExport {
   version: string;
@@ -14,12 +14,12 @@ export interface GringotsExport {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class ExportImportService {
   private isinService = inject(IsinService);
   private eventsService = inject(EventsService);
-  private readonly VERSION = '1.0';
+  private readonly VERSION = "1.0";
 
   exportarDades(): void {
     const exportData: GringotsExport = {
@@ -27,26 +27,27 @@ export class ExportImportService {
       exportDate: new Date().toISOString(),
       data: {
         isins: this.isinService.obtenirTots()(),
-        events: this.eventsService.obtenirTots()()
-      }
+        events: this.eventsService.obtenirTots()(),
+      },
     };
 
     const dataStr = JSON.stringify(exportData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
+
     // Create download link with date and time
     const now = new Date();
-    const timestamp = now.toISOString()
-      .replace('T', '-')
-      .replace(/:/g, '-')
-      .split('.')[0]; // Format: YYYY-MM-DD-HH-MM-SS
-    
+    const timestamp = now
+      .toISOString()
+      .replace("T", "-")
+      .replace(/:/g, "-")
+      .split(".")[0]; // Format: YYYY-MM-DD-HH-MM-SS
+
     const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = `gringots-backup-${timestamp}.json`;
     link.click();
-    
+
     // Cleanup
     URL.revokeObjectURL(url);
   }
@@ -54,19 +55,20 @@ export class ExportImportService {
   importarDades(file: File): Promise<void> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      
+
       reader.onload = (e) => {
         try {
           const content = e.target?.result as string;
           const importData: GringotsExport = JSON.parse(content);
-          
+
           // Validate format
           if (!importData.version || !importData.data) {
-            throw new Error('Format de fitxer invàlid');
+            throw new Error("Format de fitxer invàlid");
           }
 
           // Confirm before overwriting
-          const confirmMsg = `Això sobreescriurà totes les dades actuals.\n\n` +
+          const confirmMsg =
+            `Això sobreescriurà totes les dades actuals.\n\n` +
             `ISINs: ${importData.data.isins.length}\n` +
             `Events: ${importData.data.events.length}\n\n` +
             `Estàs segur?`;
@@ -80,19 +82,21 @@ export class ExportImportService {
           this.isinService.importar(importData.data.isins);
           this.eventsService.importar(importData.data.events);
 
-          alert('Dades importades correctament!');
+          alert("Dades importades correctament!");
           resolve();
         } catch (error) {
-          console.error('Error important dades:', error);
+          console.error("Error important dades:", error);
           reject(error);
-          alert('Error important el fitxer. Comprova que sigui un fitxer vàlid de Gringots.');
+          alert(
+            "Error important el fitxer. Comprova que sigui un fitxer vàlid de Gringots.",
+          );
         }
       };
-      
+
       reader.onerror = () => {
-        reject(new Error('Error llegint el fitxer'));
+        reject(new Error("Error llegint el fitxer"));
       };
-      
+
       reader.readAsText(file);
     });
   }

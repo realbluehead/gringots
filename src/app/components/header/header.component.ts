@@ -89,15 +89,18 @@ export class HeaderComponent {
   importar(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    
+
     if (file) {
-      this.exportImportService.importarDades(file).then(() => {
-        // Reset input so the same file can be selected again
-        input.value = '';
-      }).catch(error => {
-        console.error('Error important:', error);
-        input.value = '';
-      });
+      this.exportImportService
+        .importarDades(file)
+        .then(() => {
+          // Reset input so the same file can be selected again
+          input.value = "";
+        })
+        .catch((error) => {
+          console.error("Error important:", error);
+          input.value = "";
+        });
     }
   }
 }

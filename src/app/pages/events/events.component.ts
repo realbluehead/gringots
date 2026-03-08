@@ -381,7 +381,7 @@ export class EventsComponent {
 
   afegirEvent() {
     const nouEvent: FinancialEvent = {
-      id: '',
+      id: "",
       data: new Date(),
       isin: "US0000000000",
       tipusEvent: "compra",
@@ -393,7 +393,7 @@ export class EventsComponent {
   }
 
   esborrarEvent(id: string) {
-    if (confirm('Estàs segur que vols esborrar aquest event?')) {
+    if (confirm("Estàs segur que vols esborrar aquest event?")) {
       this.eventsService.esborrar(id);
     }
   }

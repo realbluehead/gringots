@@ -1,11 +1,11 @@
-import { Injectable, signal } from '@angular/core';
-import { Isin } from '../models/isin.model';
+import { Injectable, signal } from "@angular/core";
+import { Isin } from "../models/isin.model";
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: "root",
 })
 export class IsinService {
-  private readonly STORAGE_KEY = 'gringots_isins';
+  private readonly STORAGE_KEY = "gringots_isins";
   private isins = signal<Isin[]>([]);
 
   constructor() {
@@ -19,7 +19,7 @@ export class IsinService {
         const isins = JSON.parse(data) as Isin[];
         this.isins.set(isins);
       } catch (error) {
-        console.error('Error carregant ISINs:', error);
+        console.error("Error carregant ISINs:", error);
         this.isins.set([]);
       }
     }
@@ -34,27 +34,27 @@ export class IsinService {
   }
 
   obtenirPerIsin(isin: string): Isin | undefined {
-    return this.isins().find(i => i.isin === isin);
+    return this.isins().find((i) => i.isin === isin);
   }
 
   afegir(isin: Isin): void {
     const nouIsin: Isin = {
       ...isin,
-      id: Date.now().toString()
+      id: Date.now().toString(),
     };
-    this.isins.update(isins => [...isins, nouIsin]);
+    this.isins.update((isins) => [...isins, nouIsin]);
     this.guardarIsins();
   }
 
   actualitzar(id: string, isinActualitzat: Partial<Isin>): void {
-    this.isins.update(isins =>
-      isins.map(i => i.id === id ? { ...i, ...isinActualitzat } : i)
+    this.isins.update((isins) =>
+      isins.map((i) => (i.id === id ? { ...i, ...isinActualitzat } : i)),
     );
     this.guardarIsins();
   }
 
   esborrar(id: string): void {
-    this.isins.update(isins => isins.filter(i => i.id !== id));
+    this.isins.update((isins) => isins.filter((i) => i.id !== id));
     this.guardarIsins();
   }
 

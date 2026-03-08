@@ -1,11 +1,11 @@
-import { Component, computed, signal, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Isin } from '../../models/isin.model';
-import { IsinService } from '../../services/isin.service';
+import { Component, computed, signal, inject } from "@angular/core";
+import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { Isin } from "../../models/isin.model";
+import { IsinService } from "../../services/isin.service";
 
 @Component({
-  selector: 'app-isins',
+  selector: "app-isins",
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
@@ -69,7 +69,9 @@ import { IsinService } from '../../services/isin.service';
         <div class="flex items-center justify-between mt-4">
           <p class="text-sm text-dark-muted">
             Mostrant
-            <span class="font-semibold text-dark-text">{{ isinsFiltrats().length }}</span>
+            <span class="font-semibold text-dark-text">{{
+              isinsFiltrats().length
+            }}</span>
             de {{ isins().length }} ISINs
           </p>
           <button
@@ -82,8 +84,10 @@ import { IsinService } from '../../services/isin.service';
       </div>
 
       <!-- ISINs Table -->
-      <div class="bg-dark-card rounded-lg border border-dark-border overflow-hidden">
-        @if (isinsFiltrats().length === 0 && isinEditant !== 'nou') {
+      <div
+        class="bg-dark-card rounded-lg border border-dark-border overflow-hidden"
+      >
+        @if (isinsFiltrats().length === 0 && isinEditant !== "nou") {
           <!-- Empty State -->
           <div class="text-center py-12 px-6">
             <div class="text-6xl mb-4">📊</div>
@@ -109,22 +113,30 @@ import { IsinService } from '../../services/isin.service';
             <table class="w-full">
               <thead class="bg-dark-bg border-b border-dark-border">
                 <tr>
-                  <th class="text-left px-6 py-3 text-sm font-semibold text-dark-text">
+                  <th
+                    class="text-left px-6 py-3 text-sm font-semibold text-dark-text"
+                  >
                     ISIN
                   </th>
-                  <th class="text-left px-6 py-3 text-sm font-semibold text-dark-text">
+                  <th
+                    class="text-left px-6 py-3 text-sm font-semibold text-dark-text"
+                  >
                     Nom
                   </th>
-                  <th class="text-left px-6 py-3 text-sm font-semibold text-dark-text">
+                  <th
+                    class="text-left px-6 py-3 text-sm font-semibold text-dark-text"
+                  >
                     Ticker
                   </th>
-                  <th class="text-center px-6 py-3 text-sm font-semibold text-dark-text">
+                  <th
+                    class="text-center px-6 py-3 text-sm font-semibold text-dark-text"
+                  >
                     Accions
                   </th>
                 </tr>
               </thead>
               <tbody>
-                @if (isinEditant === 'nou') {
+                @if (isinEditant === "nou") {
                   <!-- Formulari Nou ISIN -->
                   <tr class="border-b border-dark-border bg-dark-bg/80">
                     <td class="px-6 py-4">
@@ -220,15 +232,23 @@ import { IsinService } from '../../services/isin.service';
                     </tr>
                   } @else {
                     <!-- Mode Visualització -->
-                    <tr class="border-b border-dark-border hover:bg-dark-bg/50 transition-colors">
+                    <tr
+                      class="border-b border-dark-border hover:bg-dark-bg/50 transition-colors"
+                    >
                       <td class="px-6 py-4">
-                        <span class="font-mono text-sm text-dark-text">{{ isin.isin }}</span>
+                        <span class="font-mono text-sm text-dark-text">{{
+                          isin.isin
+                        }}</span>
                       </td>
                       <td class="px-6 py-4">
-                        <span class="text-sm text-dark-text">{{ isin.nom }}</span>
+                        <span class="text-sm text-dark-text">{{
+                          isin.nom
+                        }}</span>
                       </td>
                       <td class="px-6 py-4">
-                        <span class="font-mono text-sm text-dark-text">{{ isin.ticker }}</span>
+                        <span class="font-mono text-sm text-dark-text">{{
+                          isin.ticker
+                        }}</span>
                       </td>
                       <td class="px-6 py-4">
                         <div class="flex items-center justify-center gap-2">
@@ -259,22 +279,24 @@ import { IsinService } from '../../services/isin.service';
           <div class="px-6 py-4 bg-dark-bg border-t border-dark-border">
             <p class="text-sm text-dark-muted">
               Total d'ISINs:
-              <span class="font-semibold text-dark-text">{{ isinsFiltrats().length }}</span>
+              <span class="font-semibold text-dark-text">{{
+                isinsFiltrats().length
+              }}</span>
             </p>
           </div>
         }
       </div>
     </div>
   `,
-  styles: []
+  styles: [],
 })
 export class IsinsComponent {
   private isinService = inject(IsinService);
 
   // Filtres
-  filtreCerca = '';
-  filtreNom = '';
-  filtreTicker = '';
+  filtreCerca = "";
+  filtreNom = "";
+  filtreTicker = "";
 
   // Edició d'ISINs
   isinEditant: string | null = null;
@@ -290,44 +312,46 @@ export class IsinsComponent {
     // Filtre per ISIN
     if (this.filtreCerca) {
       const cerca = this.filtreCerca.toLowerCase();
-      resultats = resultats.filter(i => i.isin.toLowerCase().includes(cerca));
+      resultats = resultats.filter((i) => i.isin.toLowerCase().includes(cerca));
     }
 
     // Filtre per Nom
     if (this.filtreNom) {
       const cerca = this.filtreNom.toLowerCase();
-      resultats = resultats.filter(i => i.nom.toLowerCase().includes(cerca));
+      resultats = resultats.filter((i) => i.nom.toLowerCase().includes(cerca));
     }
 
     // Filtre per Ticker
     if (this.filtreTicker) {
       const cerca = this.filtreTicker.toLowerCase();
-      resultats = resultats.filter(i => i.ticker.toLowerCase().includes(cerca));
+      resultats = resultats.filter((i) =>
+        i.ticker.toLowerCase().includes(cerca),
+      );
     }
 
     return resultats;
   });
 
   netejarFiltres() {
-    this.filtreCerca = '';
-    this.filtreNom = '';
-    this.filtreTicker = '';
+    this.filtreCerca = "";
+    this.filtreNom = "";
+    this.filtreTicker = "";
   }
 
   afegirIsin() {
     const nouIsin: Isin = {
-      id: '',
-      isin: '',
-      nom: '',
-      ticker: ''
+      id: "",
+      isin: "",
+      nom: "",
+      ticker: "",
     };
-    
-    this.isinEditant = 'nou';
+
+    this.isinEditant = "nou";
     this.formulariEdicio = { ...nouIsin };
   }
 
   esborrarIsin(id: string) {
-    if (confirm('Estàs segur que vols esborrar aquest ISIN?')) {
+    if (confirm("Estàs segur que vols esborrar aquest ISIN?")) {
       this.isinService.esborrar(id);
     }
   }
@@ -338,12 +362,16 @@ export class IsinsComponent {
   }
 
   guardarIsin() {
-    if (!this.formulariEdicio.isin || !this.formulariEdicio.nom || !this.formulariEdicio.ticker) {
-      alert('Si us plau, omple tots els camps');
+    if (
+      !this.formulariEdicio.isin ||
+      !this.formulariEdicio.nom ||
+      !this.formulariEdicio.ticker
+    ) {
+      alert("Si us plau, omple tots els camps");
       return;
     }
 
-    if (this.isinEditant === 'nou') {
+    if (this.isinEditant === "nou") {
       // Crear nou ISIN
       this.isinService.afegir(this.formulariEdicio as Isin);
     } else if (this.isinEditant) {
