@@ -32,3 +32,82 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
+
+/* Toastr custom styles for dark theme */
+#toast-container {
+  z-index: 999999 !important;
+}
+
+#toast-container > div {
+  opacity: 1 !important;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.5),
+    0 2px 4px -1px rgba(0, 0, 0, 0.3) !important;
+  border-radius: 8px !important;
+  padding: 15px 20px !important;
+  min-height: 60px !important;
+}
+
+.toast-success {
+  background-color: #10b981 !important;
+  color: white !important;
+}
+
+.toast-error {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+.toast-info {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
+.toast-warning {
+  background-color: #f59e0b !important;
+  color: white !important;
+}
+
+.toast-message {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+.toast-title {
+  font-weight: 700 !important;
+  font-size: 16px !important;
+}
+
+/* SweetAlert2 custom styles for dark theme */
+.swal2-popup.swal-dark-popup {
+  border: 1px solid #475569 !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+}
+
+.swal2-title {
+  color: #f1f5f9 !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+}
+
+.swal2-html-container {
+  color: #cbd5e1 !important;
+  font-size: 16px !important;
+}
+
+.swal2-icon.swal2-warning {
+  border-color: #f59e0b !important;
+  color: #f59e0b !important;
+}
+
+.swal-confirm-btn {
+  font-weight: 600 !important;
+  padding: 10px 24px !important;
+  border-radius: 8px !important;
+}
+
+.swal-cancel-btn {
+  font-weight: 600 !important;
+  padding: 10px 24px !important;
+  border-radius: 8px !important;
+}

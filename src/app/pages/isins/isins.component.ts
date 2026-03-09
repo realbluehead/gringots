@@ -3,6 +3,7 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { Isin } from "../../models/isin.model";
 import { IsinService } from "../../services/isin.service";
+import { NotificationService } from "../../services/notification.service";
 
 @Component({
   selector: "app-isins",
@@ -292,6 +293,7 @@ import { IsinService } from "../../services/isin.service";
 })
 export class IsinsComponent {
   private isinService = inject(IsinService);
+  private notificationService = inject(NotificationService);
 
   // Filtres
   filtreCerca = "";
@@ -351,9 +353,13 @@ export class IsinsComponent {
   }
 
   esborrarIsin(id: string) {
-    if (confirm("Estàs segur que vols esborrar aquest ISIN?")) {
-      this.isinService.esborrar(id);
-    }
+    this.notificationService.confirm(
+      "Estàs segur que vols esborrar aquest ISIN?",
+      () => {
+        this.isinService.esborrar(id);
+        this.notificationService.success("ISIN esborrat correctament");
+      },
+    );
   }
 
   editarIsin(isin: Isin) {
@@ -367,16 +373,18 @@ export class IsinsComponent {
       !this.formulariEdicio.nom ||
       !this.formulariEdicio.ticker
     ) {
-      alert("Si us plau, omple tots els camps");
+      this.notificationService.warning("Si us plau, omple tots els camps");
       return;
     }
 
     if (this.isinEditant === "nou") {
       // Crear nou ISIN
       this.isinService.afegir(this.formulariEdicio as Isin);
+      this.notificationService.success("ISIN creat correctament");
     } else if (this.isinEditant) {
       // Actualitzar ISIN existent
       this.isinService.actualitzar(this.isinEditant, this.formulariEdicio);
+      this.notificationService.success("ISIN actualitzat correctament");
     }
 
     this.cancelarEdicio();

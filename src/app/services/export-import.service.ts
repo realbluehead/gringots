@@ -1,6 +1,7 @@
 import { Injectable, inject } from "@angular/core";
 import { IsinService } from "./isin.service";
 import { EventsService } from "./events.service";
+import { NotificationService } from "./notification.service";
 import { Isin } from "../models/isin.model";
 import { FinancialEvent } from "../models/financial-event.model";
 
@@ -19,6 +20,7 @@ export interface GringotsExport {
 export class ExportImportService {
   private isinService = inject(IsinService);
   private eventsService = inject(EventsService);
+  private notificationService = inject(NotificationService);
   private readonly VERSION = "1.0";
 
   exportarDades(): void {
@@ -50,6 +52,9 @@ export class ExportImportService {
 
     // Cleanup
     URL.revokeObjectURL(url);
+
+    // Show success notification
+    this.notificationService.success("Dades exportades correctament!");
   }
 
   importarDades(file: File): Promise<void> {
@@ -73,21 +78,18 @@ export class ExportImportService {
             `Events: ${importData.data.events.length}\n\n` +
             `Estàs segur?`;
 
-          if (!confirm(confirmMsg)) {
-            resolve();
-            return;
-          }
+          this.notificationService.confirm(confirmMsg, () => {
+            // Import data maintaining original IDs
+            this.isinService.importar(importData.data.isins);
+            this.eventsService.importar(importData.data.events);
+            this.notificationService.success("Dades importades correctament!");
+          });
 
-          // Import data maintaining original IDs
-          this.isinService.importar(importData.data.isins);
-          this.eventsService.importar(importData.data.events);
-
-          alert("Dades importades correctament!");
           resolve();
         } catch (error) {
           console.error("Error important dades:", error);
           reject(error);
-          alert(
+          this.notificationService.error(
             "Error important el fitxer. Comprova que sigui un fitxer vàlid de Gringots.",
           );
         }

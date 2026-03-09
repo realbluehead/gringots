@@ -3,6 +3,7 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { FinancialEvent, EventType } from "../../models/financial-event.model";
 import { EventsService } from "../../services/events.service";
+import { NotificationService } from "../../services/notification.service";
 
 @Component({
   selector: "app-events",
@@ -325,6 +326,7 @@ import { EventsService } from "../../services/events.service";
 })
 export class EventsComponent {
   private eventsService = inject(EventsService);
+  private notificationService = inject(NotificationService);
 
   // Filtres (propietats normals per ngModel)
   filtreIsin = "";
@@ -393,9 +395,13 @@ export class EventsComponent {
   }
 
   esborrarEvent(id: string) {
-    if (confirm("Estàs segur que vols esborrar aquest event?")) {
-      this.eventsService.esborrar(id);
-    }
+    this.notificationService.confirm(
+      "Estàs segur que vols esborrar aquest event?",
+      () => {
+        this.eventsService.esborrar(id);
+        this.notificationService.success("Event esborrat correctament");
+      },
+    );
   }
 
   editarEvent(event: FinancialEvent) {
@@ -435,6 +441,7 @@ export class EventsComponent {
       preuTotal: numeroAccions * preuPerAccio,
     });
 
+    this.notificationService.success("Event actualitzat correctament");
     this.cancelarEdicio();
   }
 
