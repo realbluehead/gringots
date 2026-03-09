@@ -4,6 +4,10 @@ import { provideAnimations } from "@angular/platform-browser/animations";
 import { provideToastr } from "ngx-toastr";
 import { AppComponent } from "./app/app.component";
 import { routes } from "./app/app.routes";
+import { Chart, ArcElement, Tooltip, Legend, PieController } from "chart.js";
+
+// Register Chart.js components
+Chart.register(ArcElement, Tooltip, Legend, PieController);
 
 bootstrapApplication(AppComponent, {
   providers: [

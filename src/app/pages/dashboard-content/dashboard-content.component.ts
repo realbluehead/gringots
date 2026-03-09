@@ -3,6 +3,8 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { EventsService } from "../../services/events.service";
 import { IsinService } from "../../services/isin.service";
+import { BaseChartDirective } from "ng2-charts";
+import { ChartConfiguration } from "chart.js";
 
 interface Asset {
   isin: string;
@@ -15,7 +17,7 @@ interface Asset {
 @Component({
   selector: "app-dashboard-content",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BaseChartDirective],
   template: `
     <div class="space-y-6">
       <!-- Dashboard Header -->
@@ -114,6 +116,24 @@ interface Asset {
           </div>
         }
       </div>
+
+      <!-- Assets Distribution Chart -->
+      @if (assets().length > 0) {
+        <div class="bg-dark-card rounded-lg border border-dark-border p-6">
+          <h3 class="text-xl font-semibold text-dark-text mb-4">
+            Distribució d'actius
+          </h3>
+          <div class="flex justify-center items-center" style="height: 400px">
+            <canvas
+              baseChart
+              [data]="pieChartData()"
+              [options]="pieChartOptions"
+              [type]="'pie'"
+            >
+            </canvas>
+          </div>
+        </div>
+      }
 
       <!-- Dashboard Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -227,6 +247,68 @@ interface Asset {
 export class DashboardContentComponent implements OnInit {
   private eventsService = inject(EventsService);
   private isinService = inject(IsinService);
+
+  // Pie Chart Configuration
+  pieChartOptions: ChartConfiguration<"pie">["options"] = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: {
+        position: "right",
+        labels: {
+          color: "#f1f5f9",
+          font: {
+            size: 12,
+          },
+          padding: 15,
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const label = context.label || "";
+            const value = context.parsed || 0;
+            const formatted = new Intl.NumberFormat("ca-ES", {
+              style: "currency",
+              currency: "EUR",
+            }).format(value);
+            const total = context.dataset.data.reduce(
+              (a: number, b: number) => a + b,
+              0,
+            ) as number;
+            const percentage = ((value / total) * 100).toFixed(1);
+            return `${label}: ${formatted} (${percentage}%)`;
+          },
+        },
+      },
+    },
+  };
+
+  pieChartData = computed<ChartConfiguration<"pie">["data"]>(() => {
+    const assets = this.assets();
+    return {
+      labels: assets.map((a) => `${a.ticker} - ${a.nom}`),
+      datasets: [
+        {
+          data: assets.map((a) => a.costTotal),
+          backgroundColor: [
+            "#3b82f6",
+            "#10b981",
+            "#f59e0b",
+            "#ef4444",
+            "#8b5cf6",
+            "#ec4899",
+            "#14b8a6",
+            "#f97316",
+            "#6366f1",
+            "#84cc16",
+          ],
+          borderColor: "#1e293b",
+          borderWidth: 2,
+        },
+      ],
+    };
+  });
 
   estalvis: number = 0;
   costDiari: number = 70;

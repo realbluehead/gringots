@@ -13,6 +13,8 @@ import {
   X,
   Pencil,
   Trash2,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-angular";
 
 @Component({
@@ -289,34 +291,118 @@ import {
               <thead class="bg-dark-bg border-b border-dark-border">
                 <tr>
                   <th
-                    class="text-left px-6 py-3 text-sm font-semibold text-dark-text"
+                    (click)="ordenarPer('data')"
+                    class="text-left px-6 py-3 text-sm font-semibold text-dark-text cursor-pointer hover:bg-dark-bg/50 transition-colors"
                   >
-                    Data
+                    <div class="flex items-center gap-2">
+                      <span>Data</span>
+                      @if (columnaOrdenacio === "data") {
+                        <lucide-angular
+                          [img]="
+                            direccioOrdenacio === 'asc'
+                              ? ChevronUp
+                              : ChevronDown
+                          "
+                          [size]="16"
+                          class="text-white"
+                        ></lucide-angular>
+                      }
+                    </div>
                   </th>
                   <th
-                    class="text-left px-6 py-3 text-sm font-semibold text-dark-text"
+                    (click)="ordenarPer('isin')"
+                    class="text-left px-6 py-3 text-sm font-semibold text-dark-text cursor-pointer hover:bg-dark-bg/50 transition-colors"
                   >
-                    ISIN
+                    <div class="flex items-center gap-2">
+                      <span>ISIN</span>
+                      @if (columnaOrdenacio === "isin") {
+                        <lucide-angular
+                          [img]="
+                            direccioOrdenacio === 'asc'
+                              ? ChevronUp
+                              : ChevronDown
+                          "
+                          [size]="16"
+                          class="text-white"
+                        ></lucide-angular>
+                      }
+                    </div>
                   </th>
                   <th
-                    class="text-left px-6 py-3 text-sm font-semibold text-dark-text"
+                    (click)="ordenarPer('tipusEvent')"
+                    class="text-left px-6 py-3 text-sm font-semibold text-dark-text cursor-pointer hover:bg-dark-bg/50 transition-colors"
                   >
-                    Tipus
+                    <div class="flex items-center gap-2">
+                      <span>Tipus</span>
+                      @if (columnaOrdenacio === "tipusEvent") {
+                        <lucide-angular
+                          [img]="
+                            direccioOrdenacio === 'asc'
+                              ? ChevronUp
+                              : ChevronDown
+                          "
+                          [size]="16"
+                          class="text-white"
+                        ></lucide-angular>
+                      }
+                    </div>
                   </th>
                   <th
-                    class="text-right px-6 py-3 text-sm font-semibold text-dark-text"
+                    (click)="ordenarPer('numeroAccions')"
+                    class="text-right px-6 py-3 text-sm font-semibold text-dark-text cursor-pointer hover:bg-dark-bg/50 transition-colors"
                   >
-                    Accions
+                    <div class="flex items-center justify-end gap-2">
+                      <span>Accions</span>
+                      @if (columnaOrdenacio === "numeroAccions") {
+                        <lucide-angular
+                          [img]="
+                            direccioOrdenacio === 'asc'
+                              ? ChevronUp
+                              : ChevronDown
+                          "
+                          [size]="16"
+                          class="text-white"
+                        ></lucide-angular>
+                      }
+                    </div>
                   </th>
                   <th
-                    class="text-right px-6 py-3 text-sm font-semibold text-dark-text"
+                    (click)="ordenarPer('preuPerAccio')"
+                    class="text-right px-6 py-3 text-sm font-semibold text-dark-text cursor-pointer hover:bg-dark-bg/50 transition-colors"
                   >
-                    Preu/Acció
+                    <div class="flex items-center justify-end gap-2">
+                      <span>Preu/Acció</span>
+                      @if (columnaOrdenacio === "preuPerAccio") {
+                        <lucide-angular
+                          [img]="
+                            direccioOrdenacio === 'asc'
+                              ? ChevronUp
+                              : ChevronDown
+                          "
+                          [size]="16"
+                          class="text-white"
+                        ></lucide-angular>
+                      }
+                    </div>
                   </th>
                   <th
-                    class="text-right px-6 py-3 text-sm font-semibold text-dark-text"
+                    (click)="ordenarPer('preuTotal')"
+                    class="text-right px-6 py-3 text-sm font-semibold text-dark-text cursor-pointer hover:bg-dark-bg/50 transition-colors"
                   >
-                    Total
+                    <div class="flex items-center justify-end gap-2">
+                      <span>Total</span>
+                      @if (columnaOrdenacio === "preuTotal") {
+                        <lucide-angular
+                          [img]="
+                            direccioOrdenacio === 'asc'
+                              ? ChevronUp
+                              : ChevronDown
+                          "
+                          [size]="16"
+                          class="text-white"
+                        ></lucide-angular>
+                      }
+                    </div>
                   </th>
                   <th
                     class="text-center px-6 py-3 text-sm font-semibold text-dark-text"
@@ -513,6 +599,12 @@ export class EventsComponent {
   readonly X = X;
   readonly Pencil = Pencil;
   readonly Trash2 = Trash2;
+  readonly ChevronUp = ChevronUp;
+  readonly ChevronDown = ChevronDown;
+
+  // Ordenació
+  columnaOrdenacio: keyof FinancialEvent | "" = "data";
+  direccioOrdenacio: "asc" | "desc" = "desc";
 
   // Filtres (propietats normals per ngModel)
   filtreIsin = "";
@@ -577,7 +669,42 @@ export class EventsComponent {
       resultats = resultats.filter((e) => new Date(e.data) <= dataFi);
     }
 
+    // Ordenació
+    if (this.columnaOrdenacio) {
+      resultats = [...resultats].sort((a, b) => {
+        let valorA: any = a[this.columnaOrdenacio as keyof FinancialEvent];
+        let valorB: any = b[this.columnaOrdenacio as keyof FinancialEvent];
+
+        // Tractament especial per dates
+        if (this.columnaOrdenacio === "data") {
+          valorA = new Date(valorA).getTime();
+          valorB = new Date(valorB).getTime();
+        }
+
+        // Ordenació
+        if (valorA < valorB) {
+          return this.direccioOrdenacio === "asc" ? -1 : 1;
+        }
+        if (valorA > valorB) {
+          return this.direccioOrdenacio === "asc" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
     return resultats;
+  }
+
+  ordenarPer(columna: keyof FinancialEvent) {
+    if (this.columnaOrdenacio === columna) {
+      // Canviar direcció
+      this.direccioOrdenacio =
+        this.direccioOrdenacio === "asc" ? "desc" : "asc";
+    } else {
+      // Nova columna
+      this.columnaOrdenacio = columna;
+      this.direccioOrdenacio = "asc";
+    }
   }
 
   netejarFiltres() {
