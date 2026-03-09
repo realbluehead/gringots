@@ -4,6 +4,7 @@ import { FormsModule } from "@angular/forms";
 import { FinancialEvent, EventType } from "../../models/financial-event.model";
 import { EventsService } from "../../services/events.service";
 import { NotificationService } from "../../services/notification.service";
+import { IsinService } from "../../services/isin.service";
 
 @Component({
   selector: "app-events",
@@ -11,6 +12,138 @@ import { NotificationService } from "../../services/notification.service";
   imports: [CommonModule, FormsModule],
   template: `
     <div class="space-y-6">
+      <!-- Modal Afegir Event -->
+      @if (mostrarDialegNouEvent) {
+        <div
+          class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          (click)="cancelarNouEvent()"
+        >
+          <div
+            class="bg-dark-card rounded-lg border border-dark-border p-6 max-w-md w-full mx-4"
+            (click)="$event.stopPropagation()"
+          >
+            <h3 class="text-xl font-bold text-dark-text mb-4">
+              Afegir Nou Event
+            </h3>
+
+            <div class="space-y-4">
+              <!-- Data -->
+              <div>
+                <label class="block text-sm font-medium text-dark-text mb-2">
+                  Data
+                </label>
+                <input
+                  type="date"
+                  [(ngModel)]="formulariNouEvent.dataStr"
+                  class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+                />
+              </div>
+
+              <!-- ISIN -->
+              <div>
+                <label class="block text-sm font-medium text-dark-text mb-2">
+                  ISIN
+                </label>
+                <select
+                  [(ngModel)]="formulariNouEvent.isin"
+                  class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+                >
+                  <option value="">Selecciona un ISIN</option>
+                  @for (isin of isins(); track isin.id) {
+                    <option [value]="isin.isin">
+                      {{ isin.ticker }} - {{ isin.nom }}
+                    </option>
+                  }
+                </select>
+              </div>
+
+              <!-- Tipus Event -->
+              <div>
+                <label class="block text-sm font-medium text-dark-text mb-2">
+                  Tipus d'Event
+                </label>
+                <select
+                  [(ngModel)]="formulariNouEvent.tipusEvent"
+                  class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+                >
+                  <option value="compra">Compra</option>
+                  <option value="venta">Venta</option>
+                  <option value="dividend">Dividend</option>
+                </select>
+              </div>
+
+              <!-- Número d'Accions -->
+              <div>
+                <label class="block text-sm font-medium text-dark-text mb-2">
+                  Número d'Accions
+                </label>
+                <input
+                  type="number"
+                  [(ngModel)]="formulariNouEvent.numeroAccions"
+                  min="0"
+                  step="1"
+                  class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+                />
+              </div>
+
+              <!-- Preu per Acció -->
+              <div>
+                <label class="block text-sm font-medium text-dark-text mb-2">
+                  Preu per Acció (€)
+                </label>
+                <input
+                  type="number"
+                  [(ngModel)]="formulariNouEvent.preuPerAccio"
+                  min="0"
+                  step="0.01"
+                  class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+                />
+              </div>
+
+              <!-- Total -->
+              <div>
+                <label class="block text-sm font-medium text-dark-text mb-2">
+                  Total (€)
+                  <button
+                    (click)="calcularTotal(); $event.stopPropagation()"
+                    type="button"
+                    class="ml-2 text-xs text-primary-text hover:text-primary-text/80"
+                    title="Calcular automàticament"
+                  >
+                    🔄 Auto
+                  </button>
+                </label>
+                <input
+                  type="number"
+                  [(ngModel)]="formulariNouEvent.preuTotal"
+                  min="0"
+                  step="0.01"
+                  class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+                />
+              </div>
+            </div>
+
+            <!-- Botons -->
+            <div class="flex items-center justify-end gap-3 mt-6">
+              <button
+                (click)="cancelarNouEvent()"
+                type="button"
+                class="px-4 py-2 text-dark-muted hover:text-dark-text transition-colors"
+              >
+                Cancel·lar
+              </button>
+              <button
+                (click)="guardarNouEvent()"
+                type="button"
+                class="bg-primary-text hover:bg-primary-text/90 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
       <!-- Events Header -->
       <div class="flex items-center justify-between">
         <div>
@@ -35,12 +168,17 @@ import { NotificationService } from "../../services/notification.service";
             <label class="block text-sm font-medium text-dark-text mb-2">
               ISIN
             </label>
-            <input
-              type="text"
+            <select
               [(ngModel)]="filtreIsin"
-              placeholder="US0378331005"
-              class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text placeholder-dark-muted focus:outline-none focus:ring-2 focus:ring-primary-text"
-            />
+              class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+            >
+              <option value="">Tots</option>
+              @for (isin of isins(); track isin.id) {
+                <option [value]="isin.isin">
+                  {{ isin.ticker }} - {{ isin.nom }}
+                </option>
+              }
+            </select>
           </div>
 
           <!-- Filtre Tipus Event -->
@@ -183,12 +321,17 @@ import { NotificationService } from "../../services/notification.service";
                         />
                       </td>
                       <td class="px-6 py-4">
-                        <input
-                          type="text"
+                        <select
                           [(ngModel)]="formulariEdicio.isin"
-                          placeholder="ISIN"
-                          class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary-text"
-                        />
+                          class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-text"
+                        >
+                          <option value="">Selecciona un ISIN</option>
+                          @for (isin of isins(); track isin.id) {
+                            <option [value]="isin.isin">
+                              {{ isin.ticker }} - {{ isin.nom }}
+                            </option>
+                          }
+                        </select>
                       </td>
                       <td class="px-6 py-4">
                         <select
@@ -218,15 +361,14 @@ import { NotificationService } from "../../services/notification.service";
                           class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary-text"
                         />
                       </td>
-                      <td
-                        class="px-6 py-4 text-sm text-right font-semibold text-dark-text"
-                      >
-                        {{
-                          formatCurrency(
-                            (formulariEdicio.numeroAccions || 0) *
-                              (formulariEdicio.preuPerAccio || 0)
-                          )
-                        }}
+                      <td class="px-6 py-4">
+                        <input
+                          type="number"
+                          [(ngModel)]="formulariEdicio.preuTotal"
+                          min="0"
+                          step="0.01"
+                          class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary-text"
+                        />
                       </td>
                       <td class="px-6 py-4">
                         <div class="flex items-center justify-center gap-2">
@@ -255,8 +397,9 @@ import { NotificationService } from "../../services/notification.service";
                       <td class="px-6 py-4 text-sm text-dark-text">
                         {{ formatData(event.data) }}
                       </td>
-                      <td class="px-6 py-4 text-sm text-dark-text font-mono">
-                        {{ event.isin }}
+                      <td class="px-6 py-4 text-sm text-dark-text">
+                        {{ event.isin }} -
+                        {{ obtenirDescripcioIsin(event.isin) }}
                       </td>
                       <td class="px-6 py-4 text-sm">
                         <span
@@ -327,6 +470,7 @@ import { NotificationService } from "../../services/notification.service";
 export class EventsComponent {
   private eventsService = inject(EventsService);
   private notificationService = inject(NotificationService);
+  private isinService = inject(IsinService);
 
   // Filtres (propietats normals per ngModel)
   filtreIsin = "";
@@ -338,17 +482,37 @@ export class EventsComponent {
   eventEditant: string | null = null;
   formulariEdicio: Partial<FinancialEvent> = {};
 
+  // Nou event
+  mostrarDialegNouEvent = false;
+  formulariNouEvent: {
+    dataStr: string;
+    isin: string;
+    tipusEvent: EventType;
+    numeroAccions: number;
+    preuPerAccio: number;
+    preuTotal: number;
+  } = {
+    dataStr: new Date().toISOString().split("T")[0],
+    isin: "",
+    tipusEvent: "compra",
+    numeroAccions: 1,
+    preuPerAccio: 0,
+    preuTotal: 0,
+  };
+
   // Events del servei
   events = this.eventsService.obtenirTots();
+
+  // ISINs del servei
+  isins = this.isinService.obtenirTots();
 
   // Events filtrats (getter que s'executa cada vegada)
   get eventsFiltrats() {
     let resultats = this.events();
 
     // Filtre per ISIN
-    const isinFiltre = this.filtreIsin.trim().toUpperCase();
-    if (isinFiltre) {
-      resultats = resultats.filter((e) => e.isin.includes(isinFiltre));
+    if (this.filtreIsin) {
+      resultats = resultats.filter((e) => e.isin === this.filtreIsin);
     }
 
     // Filtre per Tipus Event
@@ -382,16 +546,46 @@ export class EventsComponent {
   }
 
   afegirEvent() {
-    const nouEvent: FinancialEvent = {
-      id: "",
-      data: new Date(),
-      isin: "US0000000000",
+    this.formulariNouEvent = {
+      dataStr: new Date().toISOString().split("T")[0],
+      isin: "",
       tipusEvent: "compra",
       numeroAccions: 1,
-      preuPerAccio: 100.0,
-      preuTotal: 100.0,
+      preuPerAccio: 0,
+      preuTotal: 0,
     };
+    this.mostrarDialegNouEvent = true;
+  }
+
+  calcularTotal() {
+    this.formulariNouEvent.preuTotal =
+      this.formulariNouEvent.numeroAccions *
+      this.formulariNouEvent.preuPerAccio;
+  }
+
+  guardarNouEvent() {
+    if (!this.formulariNouEvent.isin) {
+      this.notificationService.error("Selecciona un ISIN");
+      return;
+    }
+
+    const nouEvent: FinancialEvent = {
+      id: "",
+      data: new Date(this.formulariNouEvent.dataStr),
+      isin: this.formulariNouEvent.isin,
+      tipusEvent: this.formulariNouEvent.tipusEvent,
+      numeroAccions: this.formulariNouEvent.numeroAccions,
+      preuPerAccio: this.formulariNouEvent.preuPerAccio,
+      preuTotal: this.formulariNouEvent.preuTotal,
+    };
+
     this.eventsService.afegir(nouEvent);
+    this.notificationService.success("Event afegit correctament");
+    this.mostrarDialegNouEvent = false;
+  }
+
+  cancelarNouEvent() {
+    this.mostrarDialegNouEvent = false;
   }
 
   esborrarEvent(id: string) {
@@ -412,6 +606,7 @@ export class EventsComponent {
       tipusEvent: event.tipusEvent,
       numeroAccions: event.numeroAccions,
       preuPerAccio: event.preuPerAccio,
+      preuTotal: event.preuTotal,
     };
   }
 
@@ -429,16 +624,14 @@ export class EventsComponent {
     if (!this.eventEditant) return;
 
     const eventId = this.eventEditant;
-    const numeroAccions = this.formulariEdicio.numeroAccions || 0;
-    const preuPerAccio = this.formulariEdicio.preuPerAccio || 0;
 
     this.eventsService.actualitzar(eventId, {
       data: this.formulariEdicio.data,
       isin: this.formulariEdicio.isin,
       tipusEvent: this.formulariEdicio.tipusEvent,
-      numeroAccions: numeroAccions,
-      preuPerAccio: preuPerAccio,
-      preuTotal: numeroAccions * preuPerAccio,
+      numeroAccions: this.formulariEdicio.numeroAccions,
+      preuPerAccio: this.formulariEdicio.preuPerAccio,
+      preuTotal: this.formulariEdicio.preuTotal,
     });
 
     this.notificationService.success("Event actualitzat correctament");
@@ -467,5 +660,13 @@ export class EventsComponent {
 
   capitalize(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  obtenirDescripcioIsin(isinCode: string): string {
+    const isin = this.isins().find((i) => i.isin === isinCode);
+    if (isin) {
+      return `${isin.ticker}: ${isin.nom}`;
+    }
+    return "Desconegut";
   }
 }
