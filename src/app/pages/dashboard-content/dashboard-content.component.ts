@@ -29,111 +29,114 @@ interface Asset {
       </div>
 
       <!-- Assets Section -->
-      <div class="bg-dark-card rounded-lg border border-dark-border p-6">
-        <h3 class="text-xl font-semibold text-dark-text mb-4">Assets</h3>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Assets Table Card -->
+        <div class="bg-dark-card rounded-lg border border-dark-border p-6">
+          <h3 class="text-xl font-semibold text-dark-text mb-4">Assets</h3>
 
-        @if (assets().length === 0) {
-          <p class="text-dark-muted text-center py-8">
-            No tens cap actiu al portafoli
-          </p>
-        } @else {
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead class="border-b border-dark-border">
-                <tr>
-                  <th
-                    class="text-left px-4 py-3 text-sm font-semibold text-dark-text"
-                  >
-                    ISIN
-                  </th>
-                  <th
-                    class="text-left px-4 py-3 text-sm font-semibold text-dark-text"
-                  >
-                    Actiu
-                  </th>
-                  <th
-                    class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
-                  >
-                    Accions
-                  </th>
-                  <th
-                    class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
-                  >
-                    Cost Total
-                  </th>
-                  <th
-                    class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
-                  >
-                    Cost Mitjà
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (asset of assets(); track asset.isin) {
-                  <tr
-                    class="border-b border-dark-border/50 hover:bg-dark-bg/50 transition-colors"
-                  >
-                    <td class="px-4 py-3 text-sm text-dark-text font-mono">
-                      {{ asset.isin }}
-                    </td>
-                    <td class="px-4 py-3 text-sm text-dark-text">
-                      <div class="font-medium">{{ asset.ticker }}</div>
-                      <div class="text-xs text-dark-muted">{{ asset.nom }}</div>
-                    </td>
-                    <td class="px-4 py-3 text-sm text-right text-dark-text">
-                      {{ asset.quantitatAccions }}
+          @if (assets().length === 0) {
+            <p class="text-dark-muted text-center py-8">
+              No tens cap actiu al portafoli
+            </p>
+          } @else {
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead class="border-b border-dark-border">
+                  <tr>
+                    <th
+                      class="text-left px-4 py-3 text-sm font-semibold text-dark-text"
+                    >
+                      ISIN
+                    </th>
+                    <th
+                      class="text-left px-4 py-3 text-sm font-semibold text-dark-text"
+                    >
+                      Actiu
+                    </th>
+                    <th
+                      class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
+                    >
+                      Accions
+                    </th>
+                    <th
+                      class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
+                    >
+                      Cost Total
+                    </th>
+                    <th
+                      class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
+                    >
+                      Cost Mitjà
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (asset of assets(); track asset.isin) {
+                    <tr
+                      class="border-b border-dark-border/50 hover:bg-dark-bg/50 transition-colors"
+                    >
+                      <td class="px-4 py-3 text-sm text-dark-text font-mono">
+                        {{ asset.isin }}
+                      </td>
+                      <td class="px-4 py-3 text-sm text-dark-text">
+                        <div class="font-medium">{{ asset.ticker }}</div>
+                        <div class="text-xs text-dark-muted">{{ asset.nom }}</div>
+                      </td>
+                      <td class="px-4 py-3 text-sm text-right text-dark-text">
+                        {{ asset.quantitatAccions }}
+                      </td>
+                      <td
+                        class="px-4 py-3 text-sm text-right font-semibold text-dark-text"
+                      >
+                        {{ formatCurrency(asset.costTotal) }}
+                      </td>
+                      <td class="px-4 py-3 text-sm text-right text-dark-muted">
+                        {{
+                          formatCurrency(asset.costTotal / asset.quantitatAccions)
+                        }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+                <tfoot class="border-t-2 border-dark-border">
+                  <tr>
+                    <td
+                      colspan="3"
+                      class="px-4 py-3 text-sm font-semibold text-dark-text text-right"
+                    >
+                      Total:
                     </td>
                     <td
-                      class="px-4 py-3 text-sm text-right font-semibold text-dark-text"
+                      class="px-4 py-3 text-sm text-right font-bold text-primary-text"
                     >
-                      {{ formatCurrency(asset.costTotal) }}
+                      {{ formatCurrency(totalCostPortafoli()) }}
                     </td>
-                    <td class="px-4 py-3 text-sm text-right text-dark-muted">
-                      {{
-                        formatCurrency(asset.costTotal / asset.quantitatAccions)
-                      }}
-                    </td>
+                    <td></td>
                   </tr>
-                }
-              </tbody>
-              <tfoot class="border-t-2 border-dark-border">
-                <tr>
-                  <td
-                    colspan="3"
-                    class="px-4 py-3 text-sm font-semibold text-dark-text text-right"
-                  >
-                    Total:
-                  </td>
-                  <td
-                    class="px-4 py-3 text-sm text-right font-bold text-primary-text"
-                  >
-                    {{ formatCurrency(totalCostPortafoli()) }}
-                  </td>
-                  <td></td>
-                </tr>
-              </tfoot>
-            </table>
+                </tfoot>
+              </table>
+            </div>
+          }
+        </div>
+
+        <!-- Assets Distribution Chart Card -->
+        @if (assets().length > 0) {
+          <div class="bg-dark-card rounded-lg border border-dark-border p-6">
+            <h3 class="text-xl font-semibold text-dark-text mb-4">
+              Distribució d'actius
+            </h3>
+            <div class="flex justify-center items-center" style="height: 500px">
+              <canvas
+                baseChart
+                [data]="pieChartData()"
+                [options]="pieChartOptions"
+                [type]="'pie'"
+              >
+              </canvas>
+            </div>
           </div>
         }
       </div>
-
-      <!-- Assets Distribution Chart -->
-      @if (assets().length > 0) {
-        <div class="bg-dark-card rounded-lg border border-dark-border p-6">
-          <h3 class="text-xl font-semibold text-dark-text mb-4">
-            Distribució d'actius
-          </h3>
-          <div class="flex justify-center items-center" style="height: 400px">
-            <canvas
-              baseChart
-              [data]="pieChartData()"
-              [options]="pieChartOptions"
-              [type]="'pie'"
-            >
-            </canvas>
-          </div>
-        </div>
-      }
 
       <!-- Dashboard Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -254,13 +257,36 @@ export class DashboardContentComponent implements OnInit {
     maintainAspectRatio: true,
     plugins: {
       legend: {
-        position: "right",
+        position: "bottom",
         labels: {
           color: "#f1f5f9",
           font: {
             size: 12,
           },
           padding: 15,
+          generateLabels: (chart) => {
+            const data = chart.data;
+            if (data.labels && data.datasets.length) {
+              const dataset = data.datasets[0];
+              const total = (dataset.data as number[]).reduce((a, b) => a + b, 0);
+              
+              return data.labels.map((label, i) => {
+                const value = dataset.data[i] as number;
+                const percentage = ((value / total) * 100).toFixed(1);
+                
+                return {
+                  text: `${label} (${percentage}%)`,
+                  fillStyle: (dataset.backgroundColor as string[])[i],
+                  strokeStyle: dataset.borderColor as string,
+                  lineWidth: dataset.borderWidth as number,
+                  fontColor: "#f1f5f9",
+                  hidden: false,
+                  index: i
+                };
+              });
+            }
+            return [];
+          }
         },
       },
       tooltip: {
@@ -277,7 +303,7 @@ export class DashboardContentComponent implements OnInit {
               0,
             ) as number;
             const percentage = ((value / total) * 100).toFixed(1);
-            return `${label}: ${formatted} (${percentage}%)`;
+            return `${formatted} (${percentage}%)`;
           },
         },
       },
@@ -292,16 +318,18 @@ export class DashboardContentComponent implements OnInit {
         {
           data: assets.map((a) => a.costTotal),
           backgroundColor: [
-            "#3b82f6",
-            "#10b981",
-            "#f59e0b",
-            "#ef4444",
-            "#8b5cf6",
-            "#ec4899",
-            "#14b8a6",
-            "#f97316",
-            "#6366f1",
-            "#84cc16",
+            "#6366f1", // Indigo vibrant
+            "#ec4899", // Pink modern
+            "#14b8a6", // Teal
+            "#f59e0b", // Amber
+            "#8b5cf6", // Purple
+            "#06b6d4", // Cyan
+            "#f97316", // Orange
+            "#10b981", // Emerald
+            "#6366f1", // Indigo (repeat for more assets)
+            "#a855f7", // Fuchsia
+            "#0ea5e9", // Sky blue
+            "#84cc16", // Lime
           ],
           borderColor: "#1e293b",
           borderWidth: 2,
