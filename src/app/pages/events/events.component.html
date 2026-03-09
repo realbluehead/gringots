@@ -1,0 +1,548 @@
+<div class="space-y-6">
+  <!-- Modal Afegir Event -->
+  @if (mostrarDialegNouEvent) {
+    <div
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+    >
+      <div
+        class="bg-dark-card rounded-lg border border-dark-border p-6 max-w-md w-full mx-4"
+      >
+        <h3 class="text-xl font-bold text-dark-text mb-4">Afegir Nou Event</h3>
+
+        <div class="space-y-4">
+          <!-- Data -->
+          <div>
+            <label class="block text-sm font-medium text-dark-text mb-2">
+              Data
+            </label>
+            <input
+              type="date"
+              [(ngModel)]="formulariNouEvent.dataStr"
+              class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+            />
+          </div>
+
+          <!-- ISIN -->
+          <div>
+            <label class="block text-sm font-medium text-dark-text mb-2">
+              ISIN
+            </label>
+            <select
+              [(ngModel)]="formulariNouEvent.isin"
+              class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+            >
+              <option value="">Selecciona un ISIN</option>
+              @for (isin of isins(); track isin.id) {
+                <option [value]="isin.isin">
+                  {{ isin.ticker }} - {{ isin.nom }}
+                </option>
+              }
+            </select>
+          </div>
+
+          <!-- Tipus Event -->
+          <div>
+            <label class="block text-sm font-medium text-dark-text mb-2">
+              Tipus d'Event
+            </label>
+            <select
+              [(ngModel)]="formulariNouEvent.tipusEvent"
+              class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+            >
+              <option value="compra">Compra</option>
+              <option value="venta">Venta</option>
+              <option value="dividend">Dividend</option>
+            </select>
+          </div>
+
+          <!-- Número d'Accions -->
+          <div>
+            <label class="block text-sm font-medium text-dark-text mb-2">
+              Número d'Accions
+            </label>
+            <input
+              type="number"
+              [(ngModel)]="formulariNouEvent.numeroAccions"
+              min="0"
+              step="1"
+              class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+            />
+          </div>
+
+          <!-- Preu per Acció -->
+          <div>
+            <label class="block text-sm font-medium text-dark-text mb-2">
+              Preu per Acció (€)
+            </label>
+            <input
+              type="number"
+              [(ngModel)]="formulariNouEvent.preuPerAccio"
+              min="0"
+              step="0.01"
+              class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+            />
+          </div>
+
+          <!-- Total -->
+          <div>
+            <label class="block text-sm font-medium text-dark-text mb-2">
+              Total (€)
+              <button
+                (click)="calcularTotal(); $event.stopPropagation()"
+                type="button"
+                class="ml-2 text-xs text-primary-text hover:text-primary-text/80 inline-flex items-center gap-1"
+                title="Calcular automàticament"
+              >
+                <lucide-angular
+                  [img]="RefreshCw"
+                  [size]="12"
+                  class="text-white"
+                ></lucide-angular>
+                Auto
+              </button>
+            </label>
+            <input
+              type="number"
+              [(ngModel)]="formulariNouEvent.preuTotal"
+              min="0"
+              step="0.01"
+              class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+            />
+          </div>
+        </div>
+
+        <!-- Botons -->
+        <div class="flex items-center justify-end gap-3 mt-6">
+          <button
+            (click)="cancelarNouEvent()"
+            type="button"
+            class="px-4 py-2 text-dark-muted hover:text-dark-text transition-colors"
+          >
+            Cancel·lar
+          </button>
+          <button
+            (click)="guardarNouEvent()"
+            type="button"
+            class="bg-primary-text hover:bg-primary-text/90 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Events Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-bold text-dark-text mb-2">Events</h2>
+      <p class="text-dark-muted">
+        Historial de transaccions i esdeveniments del portafoli
+      </p>
+    </div>
+    <button
+      (click)="afegirEvent()"
+      class="bg-primary-text hover:bg-primary-text/90 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+    >
+      + Afegir Event
+    </button>
+  </div>
+
+  <!-- Filtres -->
+  <div class="bg-dark-card rounded-lg border border-dark-border p-4">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- Filtre ISIN -->
+      <div>
+        <label class="block text-sm font-medium text-dark-text mb-2">
+          ISIN
+        </label>
+        <select
+          [(ngModel)]="filtreIsin"
+          class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+        >
+          <option value="">Tots</option>
+          @for (isin of isins(); track isin.id) {
+            <option [value]="isin.isin">
+              {{ isin.ticker }} - {{ isin.nom }}
+            </option>
+          }
+        </select>
+      </div>
+
+      <!-- Filtre Tipus Event -->
+      <div>
+        <label class="block text-sm font-medium text-dark-text mb-2">
+          Tipus d'Event
+        </label>
+        <select
+          [(ngModel)]="filtreTipusEvent"
+          class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+        >
+          <option value="">Tots</option>
+          <option value="compra">Compra</option>
+          <option value="venta">Venta</option>
+          <option value="dividend">Dividend</option>
+        </select>
+      </div>
+
+      <!-- Filtre Data Inici -->
+      <div>
+        <label class="block text-sm font-medium text-dark-text mb-2">
+          Data Inici
+        </label>
+        <input
+          type="date"
+          [(ngModel)]="filtreDataInici"
+          class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+        />
+      </div>
+
+      <!-- Filtre Data Fi -->
+      <div>
+        <label class="block text-sm font-medium text-dark-text mb-2">
+          Data Fi
+        </label>
+        <input
+          type="date"
+          [(ngModel)]="filtreDataFi"
+          class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+        />
+      </div>
+    </div>
+
+    <!-- Botons Filtre -->
+    <div class="flex items-center justify-between mt-4">
+      <p class="text-sm text-dark-muted">
+        Mostrant
+        <span class="font-semibold text-dark-text">{{
+          eventsFiltrats.length
+        }}</span>
+        de {{ events().length }} esdeveniments
+      </p>
+      <button
+        (click)="netejarFiltres()"
+        class="text-sm text-primary-text hover:text-primary-text/80 font-medium transition-colors"
+      >
+        Netejar Filtres
+      </button>
+    </div>
+  </div>
+
+  <!-- Events Table -->
+  <div
+    class="bg-dark-card rounded-lg border border-dark-border overflow-hidden"
+  >
+    @if (eventsFiltrats.length === 0) {
+      <!-- Empty State -->
+      <div class="text-center py-12 px-6">
+        <div class="mb-4 flex justify-center">
+          <lucide-angular
+            [img]="ClipboardList"
+            [size]="64"
+            class="text-white"
+          ></lucide-angular>
+        </div>
+        @if (events().length === 0) {
+          <p class="text-dark-muted text-lg mb-2">
+            No hi ha esdeveniments encara
+          </p>
+          <p class="text-dark-muted text-sm mb-4">
+            Clica "Afegir Event" per registrar la teva primera transacció
+          </p>
+        } @else {
+          <p class="text-dark-muted text-lg mb-2">
+            No s'han trobat esdeveniments amb aquests filtres
+          </p>
+          <p class="text-dark-muted text-sm mb-4">
+            Prova a modificar els criteris de cerca
+          </p>
+        }
+      </div>
+    } @else {
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-dark-bg border-b border-dark-border">
+            <tr>
+              <th
+                (click)="ordenarPer('data')"
+                class="text-left px-6 py-3 text-sm font-semibold text-dark-text cursor-pointer hover:bg-dark-bg/50 transition-colors"
+              >
+                <div class="flex items-center gap-2">
+                  <span>Data</span>
+                  @if (columnaOrdenacio === "data") {
+                    <lucide-angular
+                      [img]="
+                        direccioOrdenacio === 'asc' ? ChevronUp : ChevronDown
+                      "
+                      [size]="16"
+                      class="text-white"
+                    ></lucide-angular>
+                  }
+                </div>
+              </th>
+              <th
+                (click)="ordenarPer('isin')"
+                class="text-left px-6 py-3 text-sm font-semibold text-dark-text cursor-pointer hover:bg-dark-bg/50 transition-colors"
+              >
+                <div class="flex items-center gap-2">
+                  <span>ISIN</span>
+                  @if (columnaOrdenacio === "isin") {
+                    <lucide-angular
+                      [img]="
+                        direccioOrdenacio === 'asc' ? ChevronUp : ChevronDown
+                      "
+                      [size]="16"
+                      class="text-white"
+                    ></lucide-angular>
+                  }
+                </div>
+              </th>
+              <th
+                (click)="ordenarPer('tipusEvent')"
+                class="text-left px-6 py-3 text-sm font-semibold text-dark-text cursor-pointer hover:bg-dark-bg/50 transition-colors"
+              >
+                <div class="flex items-center gap-2">
+                  <span>Tipus</span>
+                  @if (columnaOrdenacio === "tipusEvent") {
+                    <lucide-angular
+                      [img]="
+                        direccioOrdenacio === 'asc' ? ChevronUp : ChevronDown
+                      "
+                      [size]="16"
+                      class="text-white"
+                    ></lucide-angular>
+                  }
+                </div>
+              </th>
+              <th
+                (click)="ordenarPer('numeroAccions')"
+                class="text-right px-6 py-3 text-sm font-semibold text-dark-text cursor-pointer hover:bg-dark-bg/50 transition-colors"
+              >
+                <div class="flex items-center justify-end gap-2">
+                  <span>Accions</span>
+                  @if (columnaOrdenacio === "numeroAccions") {
+                    <lucide-angular
+                      [img]="
+                        direccioOrdenacio === 'asc' ? ChevronUp : ChevronDown
+                      "
+                      [size]="16"
+                      class="text-white"
+                    ></lucide-angular>
+                  }
+                </div>
+              </th>
+              <th
+                (click)="ordenarPer('preuPerAccio')"
+                class="text-right px-6 py-3 text-sm font-semibold text-dark-text cursor-pointer hover:bg-dark-bg/50 transition-colors"
+              >
+                <div class="flex items-center justify-end gap-2">
+                  <span>Preu/Acció</span>
+                  @if (columnaOrdenacio === "preuPerAccio") {
+                    <lucide-angular
+                      [img]="
+                        direccioOrdenacio === 'asc' ? ChevronUp : ChevronDown
+                      "
+                      [size]="16"
+                      class="text-white"
+                    ></lucide-angular>
+                  }
+                </div>
+              </th>
+              <th
+                (click)="ordenarPer('preuTotal')"
+                class="text-right px-6 py-3 text-sm font-semibold text-dark-text cursor-pointer hover:bg-dark-bg/50 transition-colors"
+              >
+                <div class="flex items-center justify-end gap-2">
+                  <span>Total</span>
+                  @if (columnaOrdenacio === "preuTotal") {
+                    <lucide-angular
+                      [img]="
+                        direccioOrdenacio === 'asc' ? ChevronUp : ChevronDown
+                      "
+                      [size]="16"
+                      class="text-white"
+                    ></lucide-angular>
+                  }
+                </div>
+              </th>
+              <th
+                class="text-center px-6 py-3 text-sm font-semibold text-dark-text"
+              >
+                Accions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (event of eventsFiltrats; track event.id) {
+              @if (eventEditant === event.id) {
+                <!-- Mode Edició -->
+                <tr class="border-b border-dark-border bg-dark-bg/80">
+                  <td class="px-6 py-4">
+                    <input
+                      type="date"
+                      [value]="getDataInputValue()"
+                      (input)="setDataFromInput($any($event.target).value)"
+                      class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-text"
+                    />
+                  </td>
+                  <td class="px-6 py-4">
+                    <select
+                      [(ngModel)]="formulariEdicio.isin"
+                      class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-text"
+                    >
+                      <option value="">Selecciona un ISIN</option>
+                      @for (isin of isins(); track isin.id) {
+                        <option [value]="isin.isin">
+                          {{ isin.ticker }} - {{ isin.nom }}
+                        </option>
+                      }
+                    </select>
+                  </td>
+                  <td class="px-6 py-4">
+                    <select
+                      [(ngModel)]="formulariEdicio.tipusEvent"
+                      class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-text"
+                    >
+                      <option value="compra">Compra</option>
+                      <option value="venta">Venta</option>
+                      <option value="dividend">Dividend</option>
+                    </select>
+                  </td>
+                  <td class="px-6 py-4">
+                    <input
+                      type="number"
+                      [(ngModel)]="formulariEdicio.numeroAccions"
+                      min="0"
+                      step="1"
+                      class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary-text"
+                    />
+                  </td>
+                  <td class="px-6 py-4">
+                    <input
+                      type="number"
+                      [(ngModel)]="formulariEdicio.preuPerAccio"
+                      min="0"
+                      step="0.01"
+                      class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary-text"
+                    />
+                  </td>
+                  <td class="px-6 py-4">
+                    <input
+                      type="number"
+                      [(ngModel)]="formulariEdicio.preuTotal"
+                      min="0"
+                      step="0.01"
+                      class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary-text"
+                    />
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center justify-center gap-2">
+                      <button
+                        (click)="guardarEvent()"
+                        class="text-green-500 hover:text-green-400 transition-colors"
+                        title="Guardar"
+                      >
+                        <lucide-angular
+                          [img]="Check"
+                          [size]="18"
+                          class="text-white"
+                        ></lucide-angular>
+                      </button>
+                      <button
+                        (click)="cancelarEdicio()"
+                        class="text-gray-500 hover:text-gray-400 transition-colors"
+                        title="Cancel·lar"
+                      >
+                        <lucide-angular
+                          [img]="X"
+                          [size]="18"
+                          class="text-white"
+                        ></lucide-angular>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @else {
+                <!-- Mode Visualització -->
+                <tr
+                  class="border-b border-dark-border hover:bg-dark-bg/50 transition-colors"
+                >
+                  <td class="px-6 py-4 text-sm text-dark-text">
+                    {{ formatData(event.data) }}
+                  </td>
+                  <td class="px-6 py-4 text-sm text-dark-text">
+                    {{ event.isin }} -
+                    {{ obtenirDescripcioIsin(event.isin) }}
+                  </td>
+                  <td class="px-6 py-4 text-sm">
+                    <span
+                      class="px-2 py-1 rounded-full text-xs font-medium"
+                      [ngClass]="{
+                        'bg-green-500/20 text-green-500':
+                          event.tipusEvent === 'compra',
+                        'bg-red-500/20 text-red-500':
+                          event.tipusEvent === 'venta',
+                        'bg-blue-500/20 text-blue-500':
+                          event.tipusEvent === 'dividend',
+                      }"
+                    >
+                      {{ capitalize(event.tipusEvent) }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-sm text-right text-dark-text">
+                    {{ event.numeroAccions }}
+                  </td>
+                  <td class="px-6 py-4 text-sm text-right text-dark-text">
+                    {{ formatCurrency(event.preuPerAccio) }}
+                  </td>
+                  <td
+                    class="px-6 py-4 text-sm text-right font-semibold text-dark-text"
+                  >
+                    {{ formatCurrency(event.preuTotal) }}
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <div class="flex items-center justify-center gap-2">
+                      <button
+                        (click)="editarEvent(event)"
+                        class="text-blue-500 hover:text-blue-400 transition-colors"
+                        title="Editar"
+                      >
+                        <lucide-angular
+                          [img]="Pencil"
+                          [size]="18"
+                          class="text-white"
+                        ></lucide-angular>
+                      </button>
+                      <button
+                        (click)="esborrarEvent(event.id)"
+                        class="text-red-500 hover:text-red-400 transition-colors"
+                        title="Esborrar"
+                      >
+                        <lucide-angular
+                          [img]="Trash2"
+                          [size]="18"
+                          class="text-white"
+                        ></lucide-angular>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Summary -->
+      <div class="px-6 py-4 bg-dark-bg border-t border-dark-border">
+        <p class="text-sm text-dark-muted">
+          Total d'esdeveniments:
+          <span class="font-semibold text-dark-text">{{
+            eventsFiltrats.length
+          }}</span>
+        </p>
+      </div>
+    }
+  </div>
+</div>

@@ -5,7 +5,6 @@ import { DashboardComponent } from "./pages/dashboard/dashboard.component";
   selector: "app-root",
   standalone: true,
   imports: [DashboardComponent],
-  template: `<app-dashboard></app-dashboard>`,
-  styles: [],
+  templateUrl: "./app.component.html",
 })
 export class AppComponent {}
