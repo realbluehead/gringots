@@ -23,9 +23,6 @@ interface Asset {
       <!-- Dashboard Header -->
       <div>
         <h2 class="text-2xl font-bold text-dark-text mb-2">Dashboard</h2>
-        <p class="text-dark-muted">
-          Vista general del teu portafoli d'inversions
-        </p>
       </div>
 
       <!-- Assets Section -->
@@ -290,6 +287,21 @@ export class DashboardContentComponent implements OnInit {
           },
         },
       },
+      datalabels: {
+        color: '#ffffff',
+        font: {
+          size: 14,
+          weight: 'bold'
+        },
+        formatter: (value: number, context: any) => {
+          const total = context.chart.data.datasets[0].data.reduce(
+            (a: number, b: number) => a + b,
+            0
+          );
+          const percentage = ((value / total) * 100).toFixed(1);
+          return `${percentage}%`;
+        }
+      }
     },
   };
 

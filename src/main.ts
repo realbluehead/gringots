@@ -5,9 +5,10 @@ import { provideToastr } from "ngx-toastr";
 import { AppComponent } from "./app/app.component";
 import { routes } from "./app/app.routes";
 import { Chart, ArcElement, Tooltip, Legend, PieController } from "chart.js";
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 // Register Chart.js components
-Chart.register(ArcElement, Tooltip, Legend, PieController);
+Chart.register(ArcElement, Tooltip, Legend, PieController, ChartDataLabels);
 
 bootstrapApplication(AppComponent, {
   providers: [
