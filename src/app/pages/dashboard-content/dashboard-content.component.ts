@@ -43,7 +43,10 @@ import { FormsModule } from "@angular/forms";
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
           <!-- Estalvis Input -->
           <div>
-            <label for="estalvis" class="block text-sm font-medium text-dark-text mb-2">
+            <label
+              for="estalvis"
+              class="block text-sm font-medium text-dark-text mb-2"
+            >
               Estalvis (€)
             </label>
             <input
@@ -58,7 +61,10 @@ import { FormsModule } from "@angular/forms";
 
           <!-- Cost Diari Input -->
           <div>
-            <label for="costDiari" class="block text-sm font-medium text-dark-text mb-2">
+            <label
+              for="costDiari"
+              class="block text-sm font-medium text-dark-text mb-2"
+            >
               Cost diari (€)
             </label>
             <input
@@ -76,11 +82,13 @@ import { FormsModule } from "@angular/forms";
             <label class="block text-sm font-medium text-dark-text mb-2">
               Dies de runway
             </label>
-            <div class="px-4 py-2 bg-dark-bg border border-dark-border rounded-lg flex items-end gap-4">
+            <div
+              class="px-4 py-2 bg-dark-bg border border-dark-border rounded-lg flex items-end gap-4"
+            >
               <div class="text-center">
                 <p class="text-xs text-dark-muted mb-1">dies</p>
                 <p class="text-2xl font-bold text-primary-text">
-                  {{ runwayDays !== null ? runwayDays : '—' }}
+                  {{ runwayDays !== null ? runwayDays : "—" }}
                 </p>
               </div>
               @if (runwayDays !== null && runwayDays > 0) {
@@ -127,26 +135,28 @@ export class DashboardContentComponent {
   runwayDays: number | null = null;
   runwayMonths: number = 0;
   runwayYears: number = 0;
-  endDate: string = '';
+  endDate: string = "";
 
   calculateRunway() {
     if (this.costDiari > 0) {
       this.runwayDays = Math.floor(this.estalvis / this.costDiari);
       this.runwayMonths = Math.round((this.runwayDays / 30) * 10) / 10;
       this.runwayYears = Math.round((this.runwayDays / 365) * 10) / 10;
-      
+
       // Calculate end date
       const today = new Date();
-      const finalDate = new Date(today.getTime() + this.runwayDays * 24 * 60 * 60 * 1000);
-      const day = String(finalDate.getDate()).padStart(2, '0');
-      const month = String(finalDate.getMonth() + 1).padStart(2, '0');
+      const finalDate = new Date(
+        today.getTime() + this.runwayDays * 24 * 60 * 60 * 1000,
+      );
+      const day = String(finalDate.getDate()).padStart(2, "0");
+      const month = String(finalDate.getMonth() + 1).padStart(2, "0");
       const year = finalDate.getFullYear();
       this.endDate = `${day}/${month}/${year}`;
     } else {
       this.runwayDays = null;
       this.runwayMonths = 0;
       this.runwayYears = 0;
-      this.endDate = '';
+      this.endDate = "";
     }
   }
 }
