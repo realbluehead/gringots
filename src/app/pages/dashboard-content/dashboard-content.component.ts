@@ -288,20 +288,20 @@ export class DashboardContentComponent implements OnInit {
         },
       },
       datalabels: {
-        color: '#ffffff',
+        color: "#ffffff",
         font: {
           size: 14,
-          weight: 'bold'
+          weight: "bold",
         },
         formatter: (value: number, context: any) => {
           const total = context.chart.data.datasets[0].data.reduce(
             (a: number, b: number) => a + b,
-            0
+            0,
           );
           const percentage = ((value / total) * 100).toFixed(1);
           return `${percentage}%`;
-        }
-      }
+        },
+      },
     },
   };
 
