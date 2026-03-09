@@ -4,11 +4,12 @@ import { FormsModule } from "@angular/forms";
 import { Isin } from "../../models/isin.model";
 import { IsinService } from "../../services/isin.service";
 import { NotificationService } from "../../services/notification.service";
+import { LucideAngularModule, Pencil, Trash2 } from "lucide-angular";
 
 @Component({
   selector: "app-isins",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule],
   template: `
     <div class="space-y-6">
       <!-- ISINs Header -->
@@ -258,14 +259,22 @@ import { NotificationService } from "../../services/notification.service";
                             class="text-blue-500 hover:text-blue-400 px-3 py-1 rounded transition-colors"
                             title="Editar"
                           >
-                            ✏️
+                            <lucide-angular
+                              [img]="Pencil"
+                              [size]="18"
+                              class="text-white"
+                            ></lucide-angular>
                           </button>
                           <button
                             (click)="esborrarIsin(isin.id)"
                             class="text-red-500 hover:text-red-400 px-3 py-1 rounded transition-colors"
                             title="Esborrar"
                           >
-                            🗑️
+                            <lucide-angular
+                              [img]="Trash2"
+                              [size]="18"
+                              class="text-white"
+                            ></lucide-angular>
                           </button>
                         </div>
                       </td>
@@ -294,6 +303,10 @@ import { NotificationService } from "../../services/notification.service";
 export class IsinsComponent {
   private isinService = inject(IsinService);
   private notificationService = inject(NotificationService);
+
+  // Lucide icons
+  readonly Pencil = Pencil;
+  readonly Trash2 = Trash2;
 
   // Filtres
   filtreCerca = "";

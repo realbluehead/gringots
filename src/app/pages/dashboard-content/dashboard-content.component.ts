@@ -1,10 +1,21 @@
-import { Component } from "@angular/core";
+import { Component, inject, OnInit, computed } from "@angular/core";
+import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { EventsService } from "../../services/events.service";
+import { IsinService } from "../../services/isin.service";
+
+interface Asset {
+  isin: string;
+  ticker: string;
+  nom: string;
+  quantitatAccions: number;
+  costTotal: number;
+}
 
 @Component({
   selector: "app-dashboard-content",
   standalone: true,
-  imports: [FormsModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="space-y-6">
       <!-- Dashboard Header -->
@@ -15,11 +26,102 @@ import { FormsModule } from "@angular/forms";
         </p>
       </div>
 
+      <!-- Assets Section -->
+      <div class="bg-dark-card rounded-lg border border-dark-border p-6">
+        <h3 class="text-xl font-semibold text-dark-text mb-4">Assets</h3>
+
+        @if (assets().length === 0) {
+          <p class="text-dark-muted text-center py-8">
+            No tens cap actiu al portafoli
+          </p>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="border-b border-dark-border">
+                <tr>
+                  <th
+                    class="text-left px-4 py-3 text-sm font-semibold text-dark-text"
+                  >
+                    ISIN
+                  </th>
+                  <th
+                    class="text-left px-4 py-3 text-sm font-semibold text-dark-text"
+                  >
+                    Actiu
+                  </th>
+                  <th
+                    class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
+                  >
+                    Accions
+                  </th>
+                  <th
+                    class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
+                  >
+                    Cost Total
+                  </th>
+                  <th
+                    class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
+                  >
+                    Cost Mitjà
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (asset of assets(); track asset.isin) {
+                  <tr
+                    class="border-b border-dark-border/50 hover:bg-dark-bg/50 transition-colors"
+                  >
+                    <td class="px-4 py-3 text-sm text-dark-text font-mono">
+                      {{ asset.isin }}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-dark-text">
+                      <div class="font-medium">{{ asset.ticker }}</div>
+                      <div class="text-xs text-dark-muted">{{ asset.nom }}</div>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-right text-dark-text">
+                      {{ asset.quantitatAccions }}
+                    </td>
+                    <td
+                      class="px-4 py-3 text-sm text-right font-semibold text-dark-text"
+                    >
+                      {{ formatCurrency(asset.costTotal) }}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-right text-dark-muted">
+                      {{
+                        formatCurrency(asset.costTotal / asset.quantitatAccions)
+                      }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot class="border-t-2 border-dark-border">
+                <tr>
+                  <td
+                    colspan="3"
+                    class="px-4 py-3 text-sm font-semibold text-dark-text text-right"
+                  >
+                    Total:
+                  </td>
+                  <td
+                    class="px-4 py-3 text-sm text-right font-bold text-primary-text"
+                  >
+                    {{ formatCurrency(totalCostPortafoli()) }}
+                  </td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        }
+      </div>
+
       <!-- Dashboard Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div class="bg-dark-card rounded-lg border border-dark-border p-6">
-          <h3 class="text-lg font-semibold text-dark-text mb-2">Valor Total</h3>
-          <p class="text-3xl font-bold text-primary-text">€0.00</p>
+          <h3 class="text-lg font-semibold text-dark-text mb-2">Cost Total</h3>
+          <p class="text-3xl font-bold text-primary-text">
+            {{ formatCurrency(totalCostPortafoli()) }}
+          </p>
         </div>
 
         <div class="bg-dark-card rounded-lg border border-dark-border p-6">
@@ -33,7 +135,7 @@ import { FormsModule } from "@angular/forms";
           <h3 class="text-lg font-semibold text-dark-text mb-2">
             Total Actius
           </h3>
-          <p class="text-3xl font-bold text-dark-text">0</p>
+          <p class="text-3xl font-bold text-dark-text">{{ assets().length }}</p>
         </div>
       </div>
 
@@ -118,24 +220,77 @@ import { FormsModule } from "@angular/forms";
           </div>
         </div>
       </div>
-
-      <!-- Placeholder Content -->
-      <div class="bg-dark-card rounded-lg border border-dark-border p-6">
-        <p class="text-dark-muted text-center">
-          Aquí es mostraran els gràfics i taules del portafoli
-        </p>
-      </div>
     </div>
   `,
   styles: [],
 })
-export class DashboardContentComponent {
+export class DashboardContentComponent implements OnInit {
+  private eventsService = inject(EventsService);
+  private isinService = inject(IsinService);
+
   estalvis: number = 0;
   costDiari: number = 70;
   runwayDays: number | null = null;
   runwayMonths: number = 0;
   runwayYears: number = 0;
   endDate: string = "";
+
+  // Computed signal per als assets
+  assets = computed(() => {
+    const events = this.eventsService.obtenirTots()();
+    const isins = this.isinService.obtenirTots()();
+    const assetsMap = new Map<string, Asset>();
+
+    // Ordenar events per data (més antics primer)
+    const eventsOrdenats = [...events].sort(
+      (a, b) => new Date(a.data).getTime() - new Date(b.data).getTime(),
+    );
+
+    // Processar tots els events
+    eventsOrdenats.forEach((event) => {
+      if (!assetsMap.has(event.isin)) {
+        const isinData = isins.find((i) => i.isin === event.isin);
+        assetsMap.set(event.isin, {
+          isin: event.isin,
+          ticker: isinData?.ticker || "N/A",
+          nom: isinData?.nom || "Desconegut",
+          quantitatAccions: 0,
+          costTotal: 0,
+        });
+      }
+
+      const asset = assetsMap.get(event.isin)!;
+
+      if (event.tipusEvent === "compra") {
+        asset.quantitatAccions += event.numeroAccions;
+        asset.costTotal += event.preuTotal;
+      } else if (event.tipusEvent === "venta") {
+        // Calcular cost mitjà abans de la venta
+        const costMitja =
+          asset.quantitatAccions > 0
+            ? asset.costTotal / asset.quantitatAccions
+            : 0;
+        // Restar accions
+        asset.quantitatAccions -= event.numeroAccions;
+        // Restar cost proporcional (no el preu de venta)
+        asset.costTotal -= costMitja * event.numeroAccions;
+      }
+      // Els dividends no afecten la quantitat d'accions ni el cost
+    });
+
+    // Filtrar assets amb quantitat > 0
+    return Array.from(assetsMap.values()).filter(
+      (asset) => asset.quantitatAccions > 0,
+    );
+  });
+
+  totalCostPortafoli = computed(() => {
+    return this.assets().reduce((sum, asset) => sum + asset.costTotal, 0);
+  });
+
+  ngOnInit() {
+    // Inicialitzar si cal
+  }
 
   calculateRunway() {
     if (this.costDiari > 0) {
@@ -158,5 +313,12 @@ export class DashboardContentComponent {
       this.runwayYears = 0;
       this.endDate = "";
     }
+  }
+
+  formatCurrency(value: number): string {
+    return new Intl.NumberFormat("ca-ES", {
+      style: "currency",
+      currency: "EUR",
+    }).format(value);
   }
 }

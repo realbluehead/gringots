@@ -1,11 +1,12 @@
 import { Component, inject } from "@angular/core";
 import { RouterLink, RouterLinkActive } from "@angular/router";
 import { ExportImportService } from "../../services/export-import.service";
+import { LucideAngularModule, Download, Upload } from "lucide-angular";
 
 @Component({
   selector: "app-header",
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, LucideAngularModule],
   template: `
     <header class="bg-dark-card border-b border-dark-border">
       <div class="container mx-auto px-4 py-4">
@@ -53,7 +54,11 @@ import { ExportImportService } from "../../services/export-import.service";
                 class="flex items-center gap-2 px-3 py-1.5 bg-dark-bg hover:bg-dark-bg/80 border border-dark-border rounded-lg text-dark-text text-sm font-medium transition-colors"
                 title="Exportar dades"
               >
-                <span>📥</span>
+                <lucide-angular
+                  [img]="Download"
+                  [size]="16"
+                  class="text-white"
+                ></lucide-angular>
                 <span>Exportar</span>
               </button>
               <button
@@ -61,7 +66,11 @@ import { ExportImportService } from "../../services/export-import.service";
                 class="flex items-center gap-2 px-3 py-1.5 bg-dark-bg hover:bg-dark-bg/80 border border-dark-border rounded-lg text-dark-text text-sm font-medium transition-colors"
                 title="Importar dades"
               >
-                <span>📤</span>
+                <lucide-angular
+                  [img]="Upload"
+                  [size]="16"
+                  class="text-white"
+                ></lucide-angular>
                 <span>Importar</span>
               </button>
               <input
@@ -81,6 +90,10 @@ import { ExportImportService } from "../../services/export-import.service";
 })
 export class HeaderComponent {
   private exportImportService = inject(ExportImportService);
+
+  // Lucide icons
+  readonly Download = Download;
+  readonly Upload = Upload;
 
   exportar(): void {
     this.exportImportService.exportarDades();

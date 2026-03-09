@@ -111,3 +111,18 @@ body {
   padding: 10px 24px !important;
   border-radius: 8px !important;
 }
+
+/* Calendar icon styles for date inputs */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(1.5);
+  cursor: pointer;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(1) brightness(2);
+}
+
+/* For Firefox */
+input[type="date"] {
+  color-scheme: dark;
+}

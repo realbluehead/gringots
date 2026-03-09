@@ -5,22 +5,29 @@ import { FinancialEvent, EventType } from "../../models/financial-event.model";
 import { EventsService } from "../../services/events.service";
 import { NotificationService } from "../../services/notification.service";
 import { IsinService } from "../../services/isin.service";
+import {
+  LucideAngularModule,
+  RefreshCw,
+  ClipboardList,
+  Check,
+  X,
+  Pencil,
+  Trash2,
+} from "lucide-angular";
 
 @Component({
   selector: "app-events",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule],
   template: `
     <div class="space-y-6">
       <!-- Modal Afegir Event -->
       @if (mostrarDialegNouEvent) {
         <div
           class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          (click)="cancelarNouEvent()"
         >
           <div
             class="bg-dark-card rounded-lg border border-dark-border p-6 max-w-md w-full mx-4"
-            (click)="$event.stopPropagation()"
           >
             <h3 class="text-xl font-bold text-dark-text mb-4">
               Afegir Nou Event
@@ -107,10 +114,15 @@ import { IsinService } from "../../services/isin.service";
                   <button
                     (click)="calcularTotal(); $event.stopPropagation()"
                     type="button"
-                    class="ml-2 text-xs text-primary-text hover:text-primary-text/80"
+                    class="ml-2 text-xs text-primary-text hover:text-primary-text/80 inline-flex items-center gap-1"
                     title="Calcular automàticament"
                   >
-                    🔄 Auto
+                    <lucide-angular
+                      [img]="RefreshCw"
+                      [size]="12"
+                      class="text-white"
+                    ></lucide-angular>
+                    Auto
                   </button>
                 </label>
                 <input
@@ -247,7 +259,13 @@ import { IsinService } from "../../services/isin.service";
         @if (eventsFiltrats.length === 0) {
           <!-- Empty State -->
           <div class="text-center py-12 px-6">
-            <div class="text-6xl mb-4">📋</div>
+            <div class="mb-4 flex justify-center">
+              <lucide-angular
+                [img]="ClipboardList"
+                [size]="64"
+                class="text-white"
+              ></lucide-angular>
+            </div>
             @if (events().length === 0) {
               <p class="text-dark-muted text-lg mb-2">
                 No hi ha esdeveniments encara
@@ -377,14 +395,22 @@ import { IsinService } from "../../services/isin.service";
                             class="text-green-500 hover:text-green-400 transition-colors"
                             title="Guardar"
                           >
-                            ✓
+                            <lucide-angular
+                              [img]="Check"
+                              [size]="18"
+                              class="text-white"
+                            ></lucide-angular>
                           </button>
                           <button
                             (click)="cancelarEdicio()"
                             class="text-gray-500 hover:text-gray-400 transition-colors"
                             title="Cancel·lar"
                           >
-                            ✕
+                            <lucide-angular
+                              [img]="X"
+                              [size]="18"
+                              class="text-white"
+                            ></lucide-angular>
                           </button>
                         </div>
                       </td>
@@ -434,14 +460,22 @@ import { IsinService } from "../../services/isin.service";
                             class="text-blue-500 hover:text-blue-400 transition-colors"
                             title="Editar"
                           >
-                            ✏️
+                            <lucide-angular
+                              [img]="Pencil"
+                              [size]="18"
+                              class="text-white"
+                            ></lucide-angular>
                           </button>
                           <button
                             (click)="esborrarEvent(event.id)"
                             class="text-red-500 hover:text-red-400 transition-colors"
                             title="Esborrar"
                           >
-                            🗑️
+                            <lucide-angular
+                              [img]="Trash2"
+                              [size]="18"
+                              class="text-white"
+                            ></lucide-angular>
                           </button>
                         </div>
                       </td>
@@ -471,6 +505,14 @@ export class EventsComponent {
   private eventsService = inject(EventsService);
   private notificationService = inject(NotificationService);
   private isinService = inject(IsinService);
+
+  // Lucide icons
+  readonly RefreshCw = RefreshCw;
+  readonly ClipboardList = ClipboardList;
+  readonly Check = Check;
+  readonly X = X;
+  readonly Pencil = Pencil;
+  readonly Trash2 = Trash2;
 
   // Filtres (propietats normals per ngModel)
   filtreIsin = "";
