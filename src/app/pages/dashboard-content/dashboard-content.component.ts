@@ -142,30 +142,6 @@ interface Asset {
         }
       </div>
 
-      <!-- Dashboard Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div class="bg-dark-card rounded-lg border border-dark-border p-6">
-          <h3 class="text-lg font-semibold text-dark-text mb-2">Cost Total</h3>
-          <p class="text-3xl font-bold text-primary-text">
-            {{ formatCurrency(totalCostPortafoli()) }}
-          </p>
-        </div>
-
-        <div class="bg-dark-card rounded-lg border border-dark-border p-6">
-          <h3 class="text-lg font-semibold text-dark-text mb-2">
-            Rendiment Diari
-          </h3>
-          <p class="text-3xl font-bold text-green-500">+0.00%</p>
-        </div>
-
-        <div class="bg-dark-card rounded-lg border border-dark-border p-6">
-          <h3 class="text-lg font-semibold text-dark-text mb-2">
-            Total Actius
-          </h3>
-          <p class="text-3xl font-bold text-dark-text">{{ assets().length }}</p>
-        </div>
-      </div>
-
       <!-- Runway Section -->
       <div class="bg-dark-card rounded-lg border border-dark-border p-6">
         <h3 class="text-xl font-semibold text-dark-text mb-4">Runway</h3>
@@ -406,7 +382,9 @@ export class DashboardContentComponent implements OnInit {
   });
 
   ngOnInit() {
-    // Inicialitzar si cal
+    // Inicialitzar estalvis amb el cost total del portafoli (arrodonit)
+    this.estalvis = Math.round(this.totalCostPortafoli());
+    this.calculateRunway();
   }
 
   calculateRunway() {
