@@ -23,6 +23,12 @@ bootstrapApplication(AppComponent, {
       tapToDismiss: true,
       maxOpened: 5,
       autoDismiss: false,
+      iconClasses: {
+        error: "",
+        info: "",
+        success: "",
+        warning: "",
+      },
     }),
   ],
 }).catch((err) => console.error(err));

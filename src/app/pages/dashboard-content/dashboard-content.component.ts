@@ -80,7 +80,9 @@ interface Asset {
                       </td>
                       <td class="px-4 py-3 text-sm text-dark-text">
                         <div class="font-medium">{{ asset.ticker }}</div>
-                        <div class="text-xs text-dark-muted">{{ asset.nom }}</div>
+                        <div class="text-xs text-dark-muted">
+                          {{ asset.nom }}
+                        </div>
                       </td>
                       <td class="px-4 py-3 text-sm text-right text-dark-text">
                         {{ asset.quantitatAccions }}
@@ -92,7 +94,9 @@ interface Asset {
                       </td>
                       <td class="px-4 py-3 text-sm text-right text-dark-muted">
                         {{
-                          formatCurrency(asset.costTotal / asset.quantitatAccions)
+                          formatCurrency(
+                            asset.costTotal / asset.quantitatAccions
+                          )
                         }}
                       </td>
                     </tr>
@@ -268,12 +272,15 @@ export class DashboardContentComponent implements OnInit {
             const data = chart.data;
             if (data.labels && data.datasets.length) {
               const dataset = data.datasets[0];
-              const total = (dataset.data as number[]).reduce((a, b) => a + b, 0);
-              
+              const total = (dataset.data as number[]).reduce(
+                (a, b) => a + b,
+                0,
+              );
+
               return data.labels.map((label, i) => {
                 const value = dataset.data[i] as number;
                 const percentage = ((value / total) * 100).toFixed(1);
-                
+
                 return {
                   text: `${label} (${percentage}%)`,
                   fillStyle: (dataset.backgroundColor as string[])[i],
@@ -281,12 +288,12 @@ export class DashboardContentComponent implements OnInit {
                   lineWidth: dataset.borderWidth as number,
                   fontColor: "#f1f5f9",
                   hidden: false,
-                  index: i
+                  index: i,
                 };
               });
             }
             return [];
-          }
+          },
         },
       },
       tooltip: {
