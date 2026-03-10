@@ -5,8 +5,8 @@ import { EventsService } from "../../services/events.service";
 import { IsinService } from "../../services/isin.service";
 import { StockPricesService } from "../../services/stock-prices.service";
 import { BaseChartDirective } from "ng2-charts";
-import { 
-  ChartConfiguration, 
+import {
+  ChartConfiguration,
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
@@ -17,7 +17,7 @@ import {
   Filler,
   Tooltip,
   Legend,
-  ArcElement
+  ArcElement,
 } from "chart.js";
 
 // Registrar components de Chart.js
@@ -31,7 +31,7 @@ ChartJS.register(
   Filler,
   Tooltip,
   Legend,
-  ArcElement
+  ArcElement,
 );
 
 interface Asset {
@@ -227,7 +227,10 @@ export class DashboardContentComponent implements OnInit {
 
     const labels: string[] = [];
     const data: number[] = [];
-    const assetsMap = new Map<string, { quantitatAccions: number; costTotal: number }>();
+    const assetsMap = new Map<
+      string,
+      { quantitatAccions: number; costTotal: number }
+    >();
 
     eventsOrdenats.forEach((event) => {
       if (!assetsMap.has(event.isin)) {
