@@ -1,4 +1,4 @@
-<div class="space-y-6">
+<div class="space-y-6 px-4">
   <!-- Dashboard Header -->
   <div>
     <h2 class="text-2xl font-bold text-dark-text mb-2">Dashboard</h2>
@@ -44,10 +44,25 @@
                 >
                   Cost Mitjà
                 </th>
+                <th
+                  class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
+                >
+                  Preu Actual
+                </th>
+                <th
+                  class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
+                >
+                  Valor Actual
+                </th>
+                <th
+                  class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
+                >
+                  P&L
+                </th>
               </tr>
             </thead>
             <tbody>
-              @for (asset of assets(); track asset.isin) {
+              @for (asset of getAssetsToDisplay(); track asset.isin) {
                 <tr
                   class="border-b border-dark-border/50 hover:bg-dark-bg/50 transition-colors"
                 >
@@ -73,6 +88,40 @@
                       formatCurrency(asset.costTotal / asset.quantitatAccions)
                     }}
                   </td>
+                  <td class="px-4 py-3 text-sm text-right text-dark-text">
+                    @if (asset.preuActual !== undefined) {
+                      {{ formatCurrency(asset.preuActual) }}
+                    } @else {
+                      <span class="text-dark-muted">—</span>
+                    }
+                  </td>
+                  <td
+                    class="px-4 py-3 text-sm text-right font-semibold text-dark-text"
+                  >
+                    @if (asset.valorActual !== undefined) {
+                      {{ formatCurrency(asset.valorActual) }}
+                    } @else {
+                      <span class="text-dark-muted">—</span>
+                    }
+                  </td>
+                  <td class="px-4 py-3 text-sm text-right font-semibold">
+                    @if (asset.profitLoss !== undefined) {
+                      <div
+                        [ngClass]="{
+                          'text-green-500': asset.profitLoss > 0,
+                          'text-red-500': asset.profitLoss < 0,
+                          'text-dark-muted': asset.profitLoss === 0,
+                        }"
+                      >
+                        <div>{{ formatCurrency(asset.profitLoss) }}</div>
+                        <div class="text-xs">
+                          ({{ asset.profitLossPercent?.toFixed(2) }}%)
+                        </div>
+                      </div>
+                    } @else {
+                      <span class="text-dark-muted">—</span>
+                    }
+                  </td>
                 </tr>
               }
             </tbody>
@@ -90,6 +139,34 @@
                   {{ formatCurrency(totalCostPortafoli()) }}
                 </td>
                 <td></td>
+                <td></td>
+                <td
+                  class="px-4 py-3 text-sm text-right font-bold text-primary-text"
+                >
+                  @if (totalValorActual > 0) {
+                    {{ formatCurrency(totalValorActual) }}
+                  } @else {
+                    <span class="text-dark-muted">—</span>
+                  }
+                </td>
+                <td class="px-4 py-3 text-sm text-right font-bold">
+                  @if (totalProfitLoss !== 0) {
+                    <div
+                      [ngClass]="{
+                        'text-green-500': totalProfitLoss > 0,
+                        'text-red-500': totalProfitLoss < 0,
+                        'text-dark-muted': totalProfitLoss === 0,
+                      }"
+                    >
+                      <div>{{ formatCurrency(totalProfitLoss) }}</div>
+                      <div class="text-xs">
+                        ({{ totalProfitLossPercent.toFixed(2) }}%)
+                      </div>
+                    </div>
+                  } @else {
+                    <span class="text-dark-muted">—</span>
+                  }
+                </td>
               </tr>
             </tfoot>
           </table>

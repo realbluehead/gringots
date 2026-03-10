@@ -13,6 +13,10 @@ interface Asset {
   nom: string;
   quantitatAccions: number;
   costTotal: number;
+  preuActual?: number;
+  valorActual?: number;
+  profitLoss?: number;
+  profitLossPercent?: number;
 }
 
 @Component({
@@ -25,6 +29,12 @@ export class DashboardContentComponent implements OnInit {
   private eventsService = inject(EventsService);
   private isinService = inject(IsinService);
   private stockPricesService = inject(StockPricesService);
+
+  stockPrices: Map<string, number> = new Map();
+  assetsWithPrices: Asset[] = [];
+  totalProfitLoss: number = 0;
+  totalProfitLossPercent: number = 0;
+  totalValorActual: number = 0;
 
   // Pie Chart Configuration
   pieChartOptions: ChartConfiguration<"pie">["options"] = {
@@ -205,12 +215,68 @@ export class DashboardContentComponent implements OnInit {
       this.stockPricesService.getPrices(tickers).subscribe({
         next: (response) => {
           console.log("Preus obtinguts:", response);
+
+          // Guardar preus al Map
+          this.stockPrices.clear();
+          response.prices.forEach((priceData) => {
+            this.stockPrices.set(priceData.symbol, priceData.price);
+          });
+
+          // Actualitzar assets amb preus i calcular profit/loss
+          this.updateAssetsWithPrices();
         },
         error: (error) => {
           console.error("Error obtenint preus:", error);
         },
       });
     }
+  }
+
+  updateAssetsWithPrices() {
+    this.assetsWithPrices = this.assets().map((asset) => {
+      const preuActual = this.stockPrices.get(asset.ticker);
+
+      if (preuActual !== undefined) {
+        const valorActual = asset.quantitatAccions * preuActual;
+        const profitLoss = valorActual - asset.costTotal;
+        const profitLossPercent = (profitLoss / asset.costTotal) * 100;
+
+        return {
+          ...asset,
+          preuActual,
+          valorActual,
+          profitLoss,
+          profitLossPercent,
+        };
+      }
+
+      return asset;
+    });
+
+    // Calcular profit/loss global
+    this.totalValorActual = this.assetsWithPrices.reduce(
+      (sum, asset) => sum + (asset.valorActual || 0),
+      0,
+    );
+
+    this.totalProfitLoss = this.assetsWithPrices.reduce(
+      (sum, asset) => sum + (asset.profitLoss || 0),
+      0,
+    );
+
+    const totalCost = this.totalCostPortafoli();
+    this.totalProfitLossPercent =
+      totalCost > 0 ? (this.totalProfitLoss / totalCost) * 100 : 0;
+
+    // Actualitzar estalvis amb el valor actual del portafoli
+    this.estalvis = Math.round(this.totalValorActual);
+    this.calculateRunway();
+  }
+
+  getAssetsToDisplay(): Asset[] {
+    return this.assetsWithPrices.length > 0
+      ? this.assetsWithPrices
+      : this.assets();
   }
 
   calculateRunway() {
