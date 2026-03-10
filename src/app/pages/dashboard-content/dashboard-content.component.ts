@@ -3,6 +3,7 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { EventsService } from "../../services/events.service";
 import { IsinService } from "../../services/isin.service";
+import { StockPricesService } from "../../services/stock-prices.service";
 import { BaseChartDirective } from "ng2-charts";
 import { ChartConfiguration } from "chart.js";
 
@@ -23,6 +24,7 @@ interface Asset {
 export class DashboardContentComponent implements OnInit {
   private eventsService = inject(EventsService);
   private isinService = inject(IsinService);
+  private stockPricesService = inject(StockPricesService);
 
   // Pie Chart Configuration
   pieChartOptions: ChartConfiguration<"pie">["options"] = {
@@ -193,6 +195,22 @@ export class DashboardContentComponent implements OnInit {
     // Inicialitzar estalvis amb el cost total del portafoli (arrodonit)
     this.estalvis = Math.round(this.totalCostPortafoli());
     this.calculateRunway();
+
+    // Obtenir tickers únics dels assets i cridar a l'API
+    const tickers = this.assets()
+      .map((asset) => asset.ticker)
+      .filter((ticker) => ticker !== "N/A");
+
+    if (tickers.length > 0) {
+      this.stockPricesService.getPrices(tickers).subscribe({
+        next: (response) => {
+          console.log("Preus obtinguts:", response);
+        },
+        error: (error) => {
+          console.error("Error obtenint preus:", error);
+        },
+      });
+    }
   }
 
   calculateRunway() {
