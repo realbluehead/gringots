@@ -7,6 +7,7 @@ import { EventsService } from "../../services/events.service";
 import { IsinService } from "../../services/isin.service";
 import { StockPricesService } from "../../services/stock-prices.service";
 import { CryptoAddressService } from "../../services/crypto-address.service";
+import { PolicyIdService } from "../../services/policy-id.service";
 import { BaseChartDirective } from "ng2-charts";
 import {
   ChartConfiguration,
@@ -60,6 +61,7 @@ export class DashboardContentComponent implements OnInit {
   private isinService = inject(IsinService);
   private stockPricesService = inject(StockPricesService);
   private cryptoAddressService = inject(CryptoAddressService);
+  private policyIdService = inject(PolicyIdService);
   private http = inject(HttpClient);
 
   stockPrices: Map<string, number> = new Map();
@@ -469,13 +471,24 @@ export class DashboardContentComponent implements OnInit {
   }
 
   groupCryptoAssetsByPolicyId() {
+    // Obtenir els policy IDs registrats al sistema
+    const registeredPolicyIds = new Set(
+      this.policyIdService.obtenirTots()().map((p) => p.policyId),
+    );
+
+    // Filtrar assets per només incloure els que tenen un policy_id registrat
+    const filteredAssets = this.cryptoAssets.filter((asset) => {
+      const policyId = asset.policy_id;
+      return policyId && registeredPolicyIds.has(policyId);
+    });
+
     const groupMap = new Map<
       string,
       { count: number; assetName: string; assets: any[] }
     >();
 
-    this.cryptoAssets.forEach((asset) => {
-      const policyId = asset.policy_id || "unknown";
+    filteredAssets.forEach((asset) => {
+      const policyId = asset.policy_id;
       const assetName = asset.asset_name || asset.metadata?.name || policyId;
       const quantity = parseInt(asset.quantity || "1", 10);
       const decimals = parseInt(asset.decimals || "0", 10);
