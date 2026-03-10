@@ -5,7 +5,34 @@ import { EventsService } from "../../services/events.service";
 import { IsinService } from "../../services/isin.service";
 import { StockPricesService } from "../../services/stock-prices.service";
 import { BaseChartDirective } from "ng2-charts";
-import { ChartConfiguration } from "chart.js";
+import { 
+  ChartConfiguration, 
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  LineController,
+  PieController,
+  Filler,
+  Tooltip,
+  Legend,
+  ArcElement
+} from "chart.js";
+
+// Registrar components de Chart.js
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  LineController,
+  PieController,
+  Filler,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
 interface Asset {
   isin: string;
@@ -96,19 +123,7 @@ export class DashboardContentComponent implements OnInit {
         },
       },
       datalabels: {
-        color: "#ffffff",
-        font: {
-          size: 14,
-          weight: "bold",
-        },
-        formatter: (value: number, context: any) => {
-          const total = context.chart.data.datasets[0].data.reduce(
-            (a: number, b: number) => a + b,
-            0,
-          );
-          const percentage = ((value / total) * 100).toFixed(1);
-          return `${percentage}%`;
-        },
+        display: false,
       },
     },
   };
@@ -136,6 +151,131 @@ export class DashboardContentComponent implements OnInit {
           ],
           borderColor: "#1e293b",
           borderWidth: 2,
+        },
+      ],
+    };
+  });
+
+  // Line Chart Configuration
+  lineChartOptions: ChartConfiguration<"line">["options"] = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: {
+        display: true,
+        position: "top",
+        labels: {
+          color: "#f1f5f9",
+          font: {
+            size: 12,
+          },
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const value = context.parsed.y || 0;
+            const formatted = new Intl.NumberFormat("ca-ES", {
+              style: "currency",
+              currency: "EUR",
+            }).format(value);
+            return `Cost: ${formatted}`;
+          },
+        },
+      },
+      datalabels: {
+        display: false,
+      },
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: "#94a3b8",
+          maxRotation: 45,
+          minRotation: 45,
+        },
+        grid: {
+          color: "#334155",
+        },
+      },
+      y: {
+        ticks: {
+          color: "#94a3b8",
+          callback: function (value) {
+            return new Intl.NumberFormat("ca-ES", {
+              style: "currency",
+              currency: "EUR",
+              notation: "compact",
+            }).format(value as number);
+          },
+        },
+        grid: {
+          color: "#334155",
+        },
+      },
+    },
+  };
+
+  portfolioTimelineData = computed<ChartConfiguration<"line">["data"]>(() => {
+    const events = this.eventsService.obtenirTots()();
+    const isins = this.isinService.obtenirTots()();
+
+    // Ordenar events per data
+    const eventsOrdenats = [...events].sort(
+      (a, b) => new Date(a.data).getTime() - new Date(b.data).getTime(),
+    );
+
+    const labels: string[] = [];
+    const data: number[] = [];
+    const assetsMap = new Map<string, { quantitatAccions: number; costTotal: number }>();
+
+    eventsOrdenats.forEach((event) => {
+      if (!assetsMap.has(event.isin)) {
+        assetsMap.set(event.isin, {
+          quantitatAccions: 0,
+          costTotal: 0,
+        });
+      }
+
+      const asset = assetsMap.get(event.isin)!;
+
+      if (event.tipusEvent === "compra") {
+        asset.quantitatAccions += event.numeroAccions;
+        asset.costTotal += event.preuTotal;
+      } else if (event.tipusEvent === "venta") {
+        const costMitja =
+          asset.quantitatAccions > 0
+            ? asset.costTotal / asset.quantitatAccions
+            : 0;
+        asset.quantitatAccions -= event.numeroAccions;
+        asset.costTotal -= costMitja * event.numeroAccions;
+      }
+
+      // Calcular cost total del portafoli en aquest punt
+      const totalCost = Array.from(assetsMap.values()).reduce(
+        (sum, a) => sum + a.costTotal,
+        0,
+      );
+
+      // Afegir punt al gràfic
+      const date = new Date(event.data);
+      const formattedDate = `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
+      labels.push(formattedDate);
+      data.push(totalCost);
+    });
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: "Cost del portafoli",
+          data,
+          borderColor: "#6366f1",
+          backgroundColor: "rgba(99, 102, 241, 0.1)",
+          fill: true,
+          tension: 0.4,
+          pointRadius: 4,
+          pointHoverRadius: 6,
         },
       ],
     };

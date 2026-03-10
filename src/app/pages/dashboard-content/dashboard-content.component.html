@@ -1,13 +1,10 @@
 <div class="space-y-6 px-4">
-  <!-- Dashboard Header -->
-  <div>
-    <h2 class="text-2xl font-bold text-dark-text mb-2">Dashboard</h2>
-  </div>
-
   <!-- Assets Section -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
     <!-- Assets Table Card -->
-    <div class="bg-dark-card rounded-lg border border-dark-border p-6">
+    <div
+      class="bg-dark-card rounded-lg border border-dark-border p-6 lg:col-span-2"
+    >
       <h3 class="text-xl font-semibold text-dark-text mb-4">Assets</h3>
 
       @if (assets().length === 0) {
@@ -178,6 +175,24 @@
             [data]="pieChartData()"
             [options]="pieChartOptions"
             [type]="'pie'"
+          >
+          </canvas>
+        </div>
+      </div>
+    }
+
+    <!-- Portfolio Timeline Chart -->
+    @if (portfolioTimelineData().labels?.length ?? 0 > 0) {
+      <div class="bg-dark-card rounded-lg border border-dark-border p-6">
+        <h3 class="text-xl font-semibold text-dark-text mb-4">
+          Evolució del cost del portafoli
+        </h3>
+        <div class="flex justify-center items-center" style="height: 500px">
+          <canvas
+            baseChart
+            [data]="portfolioTimelineData()"
+            [options]="lineChartOptions"
+            [type]="'line'"
           >
           </canvas>
         </div>
