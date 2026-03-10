@@ -22,11 +22,6 @@
                 <th
                   class="text-left px-4 py-3 text-sm font-semibold text-dark-text"
                 >
-                  ISIN
-                </th>
-                <th
-                  class="text-left px-4 py-3 text-sm font-semibold text-dark-text"
-                >
                   Actiu
                 </th>
                 <th
@@ -66,9 +61,6 @@
                 <tr
                   class="border-b border-dark-border/50 hover:bg-dark-bg/50 transition-colors"
                 >
-                  <td class="px-4 py-3 text-sm text-dark-text font-mono">
-                    {{ asset.isin }}
-                  </td>
                   <td class="px-4 py-3 text-sm text-dark-text">
                     <div class="font-medium">{{ asset.ticker }}</div>
                     <div class="text-xs text-dark-muted">
@@ -128,7 +120,7 @@
             <tfoot class="border-t-2 border-dark-border">
               <tr>
                 <td
-                  colspan="3"
+                  colspan="2"
                   class="px-4 py-3 text-sm font-semibold text-dark-text text-right"
                 >
                   Total:
