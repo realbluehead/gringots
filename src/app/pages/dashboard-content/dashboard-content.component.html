@@ -5,7 +5,7 @@
     <div
       class="bg-dark-card rounded-lg border border-dark-border p-6 lg:col-span-2"
     >
-      <h3 class="text-xl font-semibold text-dark-text mb-4">Assets</h3>
+      <h3 class="text-xl font-semibold text-dark-text mb-4">Actius</h3>
 
       @if (assets().length === 0) {
         <p class="text-dark-muted text-center py-8">
@@ -184,9 +184,19 @@
     <!-- Portfolio Timeline Chart -->
     @if (portfolioTimelineData().labels?.length ?? 0 > 0) {
       <div class="bg-dark-card rounded-lg border border-dark-border p-6">
-        <h3 class="text-xl font-semibold text-dark-text mb-4">
-          Evolució del cost del portafoli
-        </h3>
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-semibold text-dark-text">
+            Evolució inversió
+          </h3>
+          <select
+            [(ngModel)]="timelinePeriodicity"
+            class="px-3 py-1.5 bg-dark-bg border border-dark-border rounded-lg text-dark-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-text"
+          >
+            <option value="diari">Diari</option>
+            <option value="setmanal">Setmanal</option>
+            <option value="mensual">Mensual</option>
+          </select>
+        </div>
         <div class="flex justify-center items-center" style="height: 500px">
           <canvas
             baseChart
@@ -198,85 +208,88 @@
         </div>
       </div>
     }
-  </div>
 
-  <!-- Runway Section -->
-  <div class="bg-dark-card rounded-lg border border-dark-border p-6">
-    <h3 class="text-xl font-semibold text-dark-text mb-4">Runway</h3>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Estalvis Input -->
-      <div>
-        <label
-          for="estalvis"
-          class="block text-sm font-medium text-dark-text mb-2"
-        >
-          Estalvis (€)
-        </label>
-        <input
-          type="number"
-          id="estalvis"
-          [(ngModel)]="estalvis"
-          (ngModelChange)="calculateRunway()"
-          placeholder="0.00"
-          class="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
-        />
-      </div>
-
-      <!-- Cost Diari Input -->
-      <div>
-        <label
-          for="costDiari"
-          class="block text-sm font-medium text-dark-text mb-2"
-        >
-          Cost diari (€)
-        </label>
-        <input
-          type="number"
-          id="costDiari"
-          [(ngModel)]="costDiari"
-          (ngModelChange)="calculateRunway()"
-          placeholder="0.00"
-          class="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
-        />
-      </div>
-
-      <!-- Runway Result -->
-      <div>
-        <label class="block text-sm font-medium text-dark-text mb-2">
-          Dies de runway
-        </label>
-        <div
-          class="px-4 py-2 bg-dark-bg border border-dark-border rounded-lg flex items-end gap-4"
-        >
-          <div class="text-center">
-            <p class="text-xs text-dark-muted mb-1">dies</p>
-            <p class="text-2xl font-bold text-primary-text">
-              {{ runwayDays !== null ? runwayDays : "—" }}
-            </p>
+    <!-- Runway Panel -->
+    <div class="bg-dark-card rounded-lg border border-dark-border p-6">
+      <h3 class="text-xl font-semibold text-dark-text mb-4">Runway</h3>
+      <div class="space-y-4">
+        <!-- Estalvis i Cost Diari -->
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Estalvis Input -->
+          <div>
+            <label
+              for="estalvis"
+              class="block text-sm font-medium text-dark-text mb-2"
+            >
+              Estalvis (€)
+            </label>
+            <input
+              type="number"
+              id="estalvis"
+              [(ngModel)]="estalvis"
+              (ngModelChange)="calculateRunway()"
+              placeholder="0.00"
+              class="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+            />
           </div>
-          @if (runwayDays !== null && runwayDays > 0) {
-            <div class="text-dark-muted pb-1">/</div>
+
+          <!-- Cost Diari Input -->
+          <div>
+            <label
+              for="costDiari"
+              class="block text-sm font-medium text-dark-text mb-2"
+            >
+              Cost diari (€)
+            </label>
+            <input
+              type="number"
+              id="costDiari"
+              [(ngModel)]="costDiari"
+              (ngModelChange)="calculateRunway()"
+              placeholder="0.00"
+              class="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+            />
+          </div>
+        </div>
+
+        <!-- Runway Result -->
+        <div>
+          <label class="block text-sm font-medium text-dark-text mb-2">
+            Dies de runway
+          </label>
+          <div
+            class="px-4 py-2 bg-dark-bg border border-dark-border rounded-lg flex items-end justify-center gap-2"
+          >
             <div class="text-center">
-              <p class="text-xs text-dark-muted mb-1">mesos</p>
+              <p class="text-xs text-dark-muted mb-1">dies</p>
               <p class="text-2xl font-bold text-primary-text">
-                {{ runwayMonths }}
+                {{ runwayDays !== null ? runwayDays : "—" }}
               </p>
             </div>
-            <div class="text-dark-muted pb-1">/</div>
-            <div class="text-center">
-              <p class="text-xs text-dark-muted mb-1">anys</p>
-              <p class="text-2xl font-bold text-primary-text">
-                {{ runwayYears }}
-              </p>
-            </div>
-            <div class="text-dark-muted pb-1">→</div>
-            <div class="text-center">
-              <p class="text-xs text-dark-muted mb-1">data final</p>
-              <p class="text-2xl font-bold text-primary-text">
-                {{ endDate }}
-              </p>
-            </div>
-          }
+            @if (runwayDays !== null && runwayDays > 0) {
+              <div class="text-dark-muted pb-1">/</div>
+              <div class="text-center">
+                <p class="text-xs text-dark-muted mb-1">mesos</p>
+                <p class="text-2xl font-bold text-primary-text">
+                  {{ runwayMonths }}
+                </p>
+              </div>
+              <div class="text-dark-muted pb-1">/</div>
+              <div class="text-center">
+                <p class="text-xs text-dark-muted mb-1">anys</p>
+                <p class="text-2xl font-bold text-primary-text">
+                  {{ runwayYears }}
+                </p>
+              </div>
+              <div class="text-dark-muted pb-1">→</div>
+              <div class="text-center">
+                <p class="text-xs text-dark-muted mb-1">data final</p>
+                <p class="text-lg font-bold text-primary-text">
+                  {{ endDate }}
+                </p>
+              </div>
+            }
+          </div>
         </div>
       </div>
     </div>

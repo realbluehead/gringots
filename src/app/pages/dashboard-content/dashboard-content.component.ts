@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, computed } from "@angular/core";
+import { Component, inject, OnInit, computed, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { EventsService } from "../../services/events.service";
@@ -216,9 +216,12 @@ export class DashboardContentComponent implements OnInit {
     },
   };
 
+  timelinePeriodicity = signal<"diari" | "setmanal" | "mensual">("setmanal");
+
   portfolioTimelineData = computed<ChartConfiguration<"line">["data"]>(() => {
     const events = this.eventsService.obtenirTots()();
     const isins = this.isinService.obtenirTots()();
+    const periodicity = this.timelinePeriodicity();
 
     // Ordenar events per data
     const eventsOrdenats = [...events].sort(
@@ -232,37 +235,84 @@ export class DashboardContentComponent implements OnInit {
       { quantitatAccions: number; costTotal: number }
     >();
 
+    const getGroupKey = (date: Date): string => {
+      if (periodicity === "diari") {
+        return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
+      } else if (periodicity === "setmanal") {
+        const startOfYear = new Date(date.getFullYear(), 0, 1);
+        const days = Math.floor(
+          (date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000),
+        );
+        const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
+        return `${date.getFullYear()}-W${weekNumber.toString().padStart(2, "0")}`;
+      } else {
+        return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}`;
+      }
+    };
+
+    const formatLabel = (key: string): string => {
+      if (periodicity === "diari") {
+        const [year, month, day] = key.split("-");
+        return `${day}/${month}/${year}`;
+      } else if (periodicity === "setmanal") {
+        return key;
+      } else {
+        const [year, month] = key.split("-");
+        return `${month}/${year}`;
+      }
+    };
+
+    // Agrupar events per període
+    const eventsByPeriod = new Map<string, typeof eventsOrdenats>();
+
     eventsOrdenats.forEach((event) => {
-      if (!assetsMap.has(event.isin)) {
-        assetsMap.set(event.isin, {
-          quantitatAccions: 0,
-          costTotal: 0,
-        });
+      const date = new Date(event.data);
+      const periodKey = getGroupKey(date);
+
+      if (!eventsByPeriod.has(periodKey)) {
+        eventsByPeriod.set(periodKey, []);
       }
+      eventsByPeriod.get(periodKey)!.push(event);
+    });
 
-      const asset = assetsMap.get(event.isin)!;
+    // Processar cada període
+    const sortedPeriods = Array.from(eventsByPeriod.keys()).sort();
 
-      if (event.tipusEvent === "compra") {
-        asset.quantitatAccions += event.numeroAccions;
-        asset.costTotal += event.preuTotal;
-      } else if (event.tipusEvent === "venta") {
-        const costMitja =
-          asset.quantitatAccions > 0
-            ? asset.costTotal / asset.quantitatAccions
-            : 0;
-        asset.quantitatAccions -= event.numeroAccions;
-        asset.costTotal -= costMitja * event.numeroAccions;
-      }
+    sortedPeriods.forEach((periodKey) => {
+      const periodEvents = eventsByPeriod.get(periodKey)!;
 
-      // Calcular cost total del portafoli en aquest punt
+      // Processar tots els events del període
+      periodEvents.forEach((event) => {
+        if (!assetsMap.has(event.isin)) {
+          assetsMap.set(event.isin, {
+            quantitatAccions: 0,
+            costTotal: 0,
+          });
+        }
+
+        const asset = assetsMap.get(event.isin)!;
+
+        if (event.tipusEvent === "compra") {
+          asset.quantitatAccions += event.numeroAccions;
+          asset.costTotal += event.preuTotal;
+        } else if (event.tipusEvent === "venta") {
+          const costMitja =
+            asset.quantitatAccions > 0
+              ? asset.costTotal / asset.quantitatAccions
+              : 0;
+          asset.quantitatAccions -= event.numeroAccions;
+          asset.costTotal -= costMitja * event.numeroAccions;
+        }
+      });
+
+      // Calcular cost total del portafoli al final del període
       const totalCost = Array.from(assetsMap.values()).reduce(
         (sum, a) => sum + a.costTotal,
         0,
       );
 
       // Afegir punt al gràfic
-      const date = new Date(event.data);
-      const formattedDate = `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`;
+      const formattedDate = formatLabel(periodKey);
       labels.push(formattedDate);
       data.push(totalCost);
     });
