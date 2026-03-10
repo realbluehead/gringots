@@ -473,7 +473,9 @@ export class DashboardContentComponent implements OnInit {
   groupCryptoAssetsByPolicyId() {
     // Obtenir els policy IDs registrats al sistema
     const registeredPolicyIds = new Set(
-      this.policyIdService.obtenirTots()().map((p) => p.policyId),
+      this.policyIdService
+        .obtenirTots()()
+        .map((p) => p.policyId),
     );
 
     // Filtrar assets per només incloure els que tenen un policy_id registrat
