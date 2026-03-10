@@ -1,9 +1,13 @@
 import { Injectable, inject } from "@angular/core";
 import { IsinService } from "./isin.service";
 import { EventsService } from "./events.service";
+import { CryptoAddressService } from "./crypto-address.service";
+import { PolicyIdService } from "./policy-id.service";
 import { NotificationService } from "./notification.service";
 import { Isin } from "../models/isin.model";
 import { FinancialEvent } from "../models/financial-event.model";
+import { CryptoAddress } from "../models/crypto-address.model";
+import { PolicyId } from "../models/policy-id.model";
 
 export interface GringotsExport {
   version: string;
@@ -11,6 +15,8 @@ export interface GringotsExport {
   data: {
     isins: Isin[];
     events: FinancialEvent[];
+    cryptoAddresses: CryptoAddress[];
+    policyIds: PolicyId[];
   };
 }
 
@@ -20,6 +26,8 @@ export interface GringotsExport {
 export class ExportImportService {
   private isinService = inject(IsinService);
   private eventsService = inject(EventsService);
+  private cryptoAddressService = inject(CryptoAddressService);
+  private policyIdService = inject(PolicyIdService);
   private notificationService = inject(NotificationService);
   private readonly VERSION = "1.0";
 
@@ -30,6 +38,8 @@ export class ExportImportService {
       data: {
         isins: this.isinService.obtenirTots()(),
         events: this.eventsService.obtenirTots()(),
+        cryptoAddresses: this.cryptoAddressService.obtenirTotes()(),
+        policyIds: this.policyIdService.obtenirTots()(),
       },
     };
 
@@ -75,13 +85,26 @@ export class ExportImportService {
           const confirmMsg =
             `Això sobreescriurà totes les dades actuals.\n\n` +
             `ISINs: ${importData.data.isins.length}\n` +
-            `Events: ${importData.data.events.length}\n\n` +
+            `Events: ${importData.data.events.length}\n` +
+            `Adreces Crypto: ${importData.data.cryptoAddresses?.length || 0}\n` +
+            `Policy IDs: ${importData.data.policyIds?.length || 0}\n\n` +
             `Estàs segur?`;
 
           this.notificationService.confirm(confirmMsg, () => {
             // Import data maintaining original IDs
             this.isinService.importar(importData.data.isins);
             this.eventsService.importar(importData.data.events);
+
+            // Import crypto data (with backward compatibility)
+            if (importData.data.cryptoAddresses) {
+              this.cryptoAddressService.importar(
+                importData.data.cryptoAddresses,
+              );
+            }
+            if (importData.data.policyIds) {
+              this.policyIdService.importar(importData.data.policyIds);
+            }
+
             this.notificationService.success("Dades importades correctament!");
           });
 
