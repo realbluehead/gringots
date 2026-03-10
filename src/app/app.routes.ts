@@ -23,4 +23,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import("./pages/isins/isins.component").then((m) => m.IsinsComponent),
   },
+  {
+    path: "crypto",
+    loadComponent: () =>
+      import("./pages/crypto/crypto.component").then((m) => m.CryptoComponent),
+  },
 ];

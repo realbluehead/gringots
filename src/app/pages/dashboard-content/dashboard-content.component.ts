@@ -1,9 +1,12 @@
 import { Component, inject, OnInit, computed, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { HttpClient } from "@angular/common/http";
+import { forkJoin } from "rxjs";
 import { EventsService } from "../../services/events.service";
 import { IsinService } from "../../services/isin.service";
 import { StockPricesService } from "../../services/stock-prices.service";
+import { CryptoAddressService } from "../../services/crypto-address.service";
 import { BaseChartDirective } from "ng2-charts";
 import {
   ChartConfiguration,
@@ -56,12 +59,20 @@ export class DashboardContentComponent implements OnInit {
   private eventsService = inject(EventsService);
   private isinService = inject(IsinService);
   private stockPricesService = inject(StockPricesService);
+  private cryptoAddressService = inject(CryptoAddressService);
+  private http = inject(HttpClient);
 
   stockPrices: Map<string, number> = new Map();
   assetsWithPrices: Asset[] = [];
   totalProfitLoss: number = 0;
   totalProfitLossPercent: number = 0;
   totalValorActual: number = 0;
+
+  // Crypto assets
+  cryptoAssets: any[] = [];
+  cryptoAssetsByPolicyId = signal<
+    { policyId: string; assetName: string; count: number; assets: any[] }[]
+  >([]);
 
   // Pie Chart Configuration
   pieChartOptions: ChartConfiguration<"pie">["options"] = {
@@ -423,6 +434,78 @@ export class DashboardContentComponent implements OnInit {
         },
       });
     }
+
+    // Obtenir adreces crypto i cridar a l'API
+    const cryptoAddresses = this.cryptoAddressService.obtenirTotes()();
+
+    if (cryptoAddresses.length > 0) {
+      const cryptoRequests = cryptoAddresses.map((address) => {
+        const apiUrl = `http://localhost:3000/api/crypto/get?address=${address.adressa}`;
+        return this.http.get(apiUrl);
+      });
+
+      forkJoin(cryptoRequests).subscribe({
+        next: (responses) => {
+          console.log("Respostes crypto:", responses);
+
+          // Processar i guardar tots els actius crypto
+          this.cryptoAssets = [];
+          responses.forEach((response: any) => {
+            if (response && response.assets && Array.isArray(response.assets)) {
+              this.cryptoAssets.push(...response.assets);
+            }
+          });
+
+          console.log("Total actius crypto:", this.cryptoAssets.length);
+
+          // Agrupar per policy_id
+          this.groupCryptoAssetsByPolicyId();
+        },
+        error: (error) => {
+          console.error("Error obtenint info crypto:", error);
+        },
+      });
+    }
+  }
+
+  groupCryptoAssetsByPolicyId() {
+    const groupMap = new Map<
+      string,
+      { count: number; assetName: string; assets: any[] }
+    >();
+
+    this.cryptoAssets.forEach((asset) => {
+      const policyId = asset.policy_id || "unknown";
+      const assetName = asset.asset_name || asset.metadata?.name || policyId;
+      const quantity = parseInt(asset.quantity || "1", 10);
+      const decimals = parseInt(asset.decimals || "0", 10);
+      const actualQuantity = Math.round(quantity / Math.pow(10, decimals));
+
+      if (!groupMap.has(policyId)) {
+        groupMap.set(policyId, {
+          count: 0,
+          assetName: assetName,
+          assets: [],
+        });
+      }
+
+      const group = groupMap.get(policyId)!;
+      group.count += actualQuantity;
+      group.assets.push(asset);
+    });
+
+    // Convertir Map a array
+    const groupedArray = Array.from(groupMap.entries()).map(
+      ([policyId, data]) => ({
+        policyId,
+        assetName: data.assetName,
+        count: data.count,
+        assets: data.assets,
+      }),
+    );
+
+    this.cryptoAssetsByPolicyId.set(groupedArray);
+    console.log("Cryptoactius agrupats per policy_id:", groupedArray);
   }
 
   updateAssetsWithPrices() {

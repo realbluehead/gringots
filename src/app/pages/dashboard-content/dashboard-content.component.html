@@ -1,5 +1,5 @@
 <div class="space-y-6 px-4">
-  <!-- Assets Section -->
+  <!-- First Row: Assets Table, Cryptoactius, Runway -->
   <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
     <!-- Assets Table Card -->
     <div
@@ -163,48 +163,61 @@
       }
     </div>
 
-    <!-- Assets Distribution Chart Card -->
-    @if (assets().length > 0) {
+    <!-- Cryptoactius Panel -->
+    @if (cryptoAssetsByPolicyId().length > 0) {
       <div class="bg-dark-card rounded-lg border border-dark-border p-6">
-        <h3 class="text-xl font-semibold text-dark-text mb-4">
-          Distribució d'actius
-        </h3>
-        <div class="flex justify-center items-center" style="height: 500px">
-          <canvas
-            baseChart
-            [data]="pieChartData()"
-            [options]="pieChartOptions"
-            [type]="'pie'"
-          >
-          </canvas>
-        </div>
-      </div>
-    }
-
-    <!-- Portfolio Timeline Chart -->
-    @if (portfolioTimelineData().labels?.length ?? 0 > 0) {
-      <div class="bg-dark-card rounded-lg border border-dark-border p-6">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-xl font-semibold text-dark-text">
-            Evolució inversió
-          </h3>
-          <select
-            [(ngModel)]="timelinePeriodicity"
-            class="px-3 py-1.5 bg-dark-bg border border-dark-border rounded-lg text-dark-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-text"
-          >
-            <option value="diari">Diari</option>
-            <option value="setmanal">Setmanal</option>
-            <option value="mensual">Mensual</option>
-          </select>
-        </div>
-        <div class="flex justify-center items-center" style="height: 500px">
-          <canvas
-            baseChart
-            [data]="portfolioTimelineData()"
-            [options]="lineChartOptions"
-            [type]="'line'"
-          >
-          </canvas>
+        <h3 class="text-xl font-semibold text-dark-text mb-4">Cryptoactius</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="border-b border-dark-border">
+              <tr>
+                <th
+                  class="text-left px-4 py-3 text-sm font-semibold text-dark-text"
+                >
+                  Actiu
+                </th>
+                <th
+                  class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
+                >
+                  Quantitat
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (group of cryptoAssetsByPolicyId(); track group.policyId) {
+                <tr
+                  class="border-b border-dark-border/50 hover:bg-dark-bg/50 transition-colors"
+                >
+                  <td class="px-4 py-3 text-sm text-dark-text">
+                    <div class="truncate max-w-md" [title]="group.policyId">
+                      {{ group.assetName }}
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-sm text-right text-dark-text">
+                    <span
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-text/20 text-primary-text"
+                    >
+                      {{ group.count }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+            <tfoot class="border-t-2 border-dark-border">
+              <tr>
+                <td
+                  class="px-4 py-3 text-sm font-semibold text-dark-text text-right"
+                >
+                  Total:
+                </td>
+                <td
+                  class="px-4 py-3 text-sm text-right font-bold text-primary-text"
+                >
+                  {{ cryptoAssets.length }} actius
+                </td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
     }
@@ -293,5 +306,54 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Assets Distribution Chart Card -->
+    @if (assets().length > 0) {
+      <div class="bg-dark-card rounded-lg border border-dark-border p-6">
+        <h3 class="text-xl font-semibold text-dark-text mb-4">
+          Distribució d'actius
+        </h3>
+        <div class="flex justify-center items-center" style="height: 500px">
+          <canvas
+            baseChart
+            [data]="pieChartData()"
+            [options]="pieChartOptions"
+            [type]="'pie'"
+          >
+          </canvas>
+        </div>
+      </div>
+    }
+
+    <!-- Portfolio Timeline Chart -->
+    @if (portfolioTimelineData().labels?.length ?? 0 > 0) {
+      <div class="bg-dark-card rounded-lg border border-dark-border p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-semibold text-dark-text">
+            Evolució inversió
+          </h3>
+          <select
+            [(ngModel)]="timelinePeriodicity"
+            class="px-3 py-1.5 bg-dark-bg border border-dark-border rounded-lg text-dark-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-text"
+          >
+            <option value="diari">Diari</option>
+            <option value="setmanal">Setmanal</option>
+            <option value="mensual">Mensual</option>
+          </select>
+        </div>
+        <div class="flex justify-center items-center" style="height: 500px">
+          <canvas
+            baseChart
+            [data]="portfolioTimelineData()"
+            [options]="lineChartOptions"
+            [type]="'line'"
+          >
+          </canvas>
+        </div>
+      </div>
+    }
   </div>
 </div>

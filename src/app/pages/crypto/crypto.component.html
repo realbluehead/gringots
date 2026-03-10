@@ -1,0 +1,240 @@
+<div class="space-y-6">
+  <!-- Crypto Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-bold text-dark-text mb-2">
+        Gestió d'Adreces Crypto
+      </h2>
+      <p class="text-dark-muted">
+        Gestiona les adreces de criptomonedes del teu portafoli
+      </p>
+    </div>
+    <button
+      (click)="afegirAddress()"
+      class="bg-primary-text hover:bg-primary-text/90 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+    >
+      + Afegir Adreça
+    </button>
+  </div>
+
+  <!-- Search Filter -->
+  <div class="bg-dark-card rounded-lg border border-dark-border p-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-dark-text mb-2">
+          Cercar Adreça
+        </label>
+        <input
+          type="text"
+          [(ngModel)]="filtreCerca"
+          placeholder="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
+          class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text placeholder-dark-muted focus:outline-none focus:ring-2 focus:ring-primary-text font-mono text-sm"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-dark-text mb-2">
+          Cercar Tipus
+        </label>
+        <input
+          type="text"
+          [(ngModel)]="filtreTipus"
+          placeholder="BTC, ADA, ETH..."
+          class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text placeholder-dark-muted focus:outline-none focus:ring-2 focus:ring-primary-text"
+        />
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between mt-4">
+      <p class="text-sm text-dark-muted">
+        Mostrant
+        <span class="font-semibold text-dark-text">{{
+          addressesFiltrades().length
+        }}</span>
+        de {{ addresses().length }} adreces
+      </p>
+      <button
+        (click)="netejarFiltres()"
+        class="text-sm text-primary-text hover:text-primary-text/80 font-medium transition-colors"
+      >
+        Netejar Filtres
+      </button>
+    </div>
+  </div>
+
+  <!-- Addresses Table -->
+  <div
+    class="bg-dark-card rounded-lg border border-dark-border overflow-hidden"
+  >
+    @if (addressesFiltrades().length === 0 && addressEditant !== "nova") {
+      <!-- Empty State -->
+      <div class="text-center py-12 px-6">
+        <div class="text-6xl mb-4">₿</div>
+        @if (addresses().length === 0) {
+          <p class="text-dark-muted text-lg mb-2">
+            No hi ha adreces crypto registrades encara
+          </p>
+          <p class="text-dark-muted text-sm mb-4">
+            Clica "Afegir Adreça" per registrar la teva primera adreça
+          </p>
+        } @else {
+          <p class="text-dark-muted text-lg mb-2">
+            No s'han trobat adreces amb aquests filtres
+          </p>
+          <p class="text-dark-muted text-sm mb-4">
+            Prova a modificar els criteris de cerca
+          </p>
+        }
+      </div>
+    } @else {
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-dark-bg border-b border-dark-border">
+            <tr>
+              <th
+                class="text-left px-6 py-3 text-sm font-semibold text-dark-text"
+              >
+                Tipus
+              </th>
+              <th
+                class="text-left px-6 py-3 text-sm font-semibold text-dark-text"
+              >
+                Adreça
+              </th>
+              <th
+                class="text-center px-6 py-3 text-sm font-semibold text-dark-text"
+              >
+                Accions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (addressEditant === "nova") {
+              <!-- Formulari Nova Adreça -->
+              <tr class="border-b border-dark-border bg-dark-bg/80">
+                <td class="px-6 py-4">
+                  <select
+                    [(ngModel)]="formulariEdicio.tipus"
+                    class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-text"
+                  >
+                    @for (tipus of tipusCrypto; track tipus) {
+                      <option [value]="tipus">{{ tipus }}</option>
+                    }
+                  </select>
+                </td>
+                <td class="px-6 py-4">
+                  <input
+                    type="text"
+                    [(ngModel)]="formulariEdicio.adressa"
+                    placeholder="Entra l'adreça"
+                    class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary-text"
+                  />
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex items-center justify-center gap-2">
+                    <button
+                      (click)="guardarAddress()"
+                      class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                    >
+                      Guardar
+                    </button>
+                    <button
+                      (click)="cancelarEdicio()"
+                      class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                    >
+                      Cancel·lar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+            @for (address of addressesFiltrades(); track address.id) {
+              @if (addressEditant === address.id) {
+                <!-- Mode Edició -->
+                <tr class="border-b border-dark-border bg-dark-bg/80">
+                  <td class="px-6 py-4">
+                    <select
+                      [(ngModel)]="formulariEdicio.tipus"
+                      class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-text"
+                    >
+                      @for (tipus of tipusCrypto; track tipus) {
+                        <option [value]="tipus">{{ tipus }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td class="px-6 py-4">
+                    <input
+                      type="text"
+                      [(ngModel)]="formulariEdicio.adressa"
+                      placeholder="Entra l'adreça"
+                      class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary-text"
+                    />
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center justify-center gap-2">
+                      <button
+                        (click)="guardarAddress()"
+                        class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                      >
+                        Guardar
+                      </button>
+                      <button
+                        (click)="cancelarEdicio()"
+                        class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                      >
+                        Cancel·lar
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @else {
+                <!-- Mode Lectura -->
+                <tr
+                  class="border-b border-dark-border hover:bg-dark-bg/50 transition-colors"
+                >
+                  <td class="px-6 py-4">
+                    <span
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-text/20 text-primary-text"
+                    >
+                      {{ address.tipus }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="text-dark-text text-sm font-mono break-all">
+                      {{ address.adressa }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex items-center justify-center gap-2">
+                      <button
+                        (click)="editarAddress(address)"
+                        class="p-1.5 text-blue-500 hover:bg-blue-500/10 rounded transition-colors"
+                        title="Editar"
+                      >
+                        <lucide-angular
+                          [img]="Pencil"
+                          [size]="16"
+                        ></lucide-angular>
+                      </button>
+                      <button
+                        (click)="esborrarAddress(address.id)"
+                        class="p-1.5 text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                        title="Esborrar"
+                      >
+                        <lucide-angular
+                          [img]="Trash2"
+                          [size]="16"
+                        ></lucide-angular>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
