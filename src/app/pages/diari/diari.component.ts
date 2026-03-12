@@ -2,6 +2,7 @@ import { Component, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { DailyEntryService } from "../../services/daily-entry.service";
+import { CategoryService } from "../../services/category.service";
 import { NotificationService } from "../../services/notification.service";
 import { DailyEntryType } from "../../models/daily-entry.model";
 
@@ -13,8 +14,10 @@ import { DailyEntryType } from "../../models/daily-entry.model";
 })
 export class DiariComponent {
   private dailyEntryService = inject(DailyEntryService);
+  private categoryService = inject(CategoryService);
   private notificationService = inject(NotificationService);
 
+  categories = this.categoryService.obtenirTotes();
   entries = this.dailyEntryService.obtenirTots();
 
   filtreData = this.avuiLocal();
@@ -101,6 +104,11 @@ export class DiariComponent {
       currency: "EUR",
       minimumFractionDigits: 2,
     }).format(value);
+  }
+
+  getCategoriaColor(nom: string): string | null {
+    const cat = this.categories().find((c) => c.nom === nom);
+    return cat ? cat.color : null;
   }
 
   private avuiLocal(): string {

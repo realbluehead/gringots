@@ -40,6 +40,18 @@
       >
         Policy IDs
       </button>
+
+      <button
+        (click)="setTab('categories')"
+        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        [ngClass]="
+          isTabActive('categories')
+            ? 'bg-primary-text text-white'
+            : 'text-dark-muted hover:text-dark-text hover:bg-dark-bg'
+        "
+      >
+        Categories
+      </button>
     </div>
   </div>
 
@@ -53,5 +65,9 @@
 
   @if (activeTab === "policy-ids") {
     <app-crypto [mode]="'policyIds'"></app-crypto>
+  }
+
+  @if (activeTab === "categories") {
+    <app-categories></app-categories>
   }
 </div>

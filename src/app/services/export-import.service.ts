@@ -4,12 +4,14 @@ import { EventsService } from "./events.service";
 import { CryptoAddressService } from "./crypto-address.service";
 import { PolicyIdService } from "./policy-id.service";
 import { DailyEntryService } from "./daily-entry.service";
+import { CategoryService } from "./category.service";
 import { NotificationService } from "./notification.service";
 import { Isin } from "../models/isin.model";
 import { FinancialEvent } from "../models/financial-event.model";
 import { CryptoAddress } from "../models/crypto-address.model";
 import { PolicyId } from "../models/policy-id.model";
 import { DailyEntry } from "../models/daily-entry.model";
+import { Category } from "../models/category.model";
 
 export interface GringotsExport {
   version: string;
@@ -20,6 +22,7 @@ export interface GringotsExport {
     cryptoAddresses: CryptoAddress[];
     policyIds: PolicyId[];
     dailyEntries?: DailyEntry[];
+    categories?: Category[];
   };
 }
 
@@ -32,6 +35,7 @@ export class ExportImportService {
   private cryptoAddressService = inject(CryptoAddressService);
   private policyIdService = inject(PolicyIdService);
   private dailyEntryService = inject(DailyEntryService);
+  private categoryService = inject(CategoryService);
   private notificationService = inject(NotificationService);
   private readonly VERSION = "1.0";
 
@@ -45,6 +49,7 @@ export class ExportImportService {
         cryptoAddresses: this.cryptoAddressService.obtenirTotes()(),
         policyIds: this.policyIdService.obtenirTots()(),
         dailyEntries: this.dailyEntryService.obtenirTots()(),
+        categories: this.categoryService.obtenirTotes()(),
       },
     };
 
@@ -93,7 +98,8 @@ export class ExportImportService {
             `Events: ${importData.data.events.length}\n` +
             `Adreces Crypto: ${importData.data.cryptoAddresses?.length || 0}\n` +
             `Policy IDs: ${importData.data.policyIds?.length || 0}\n` +
-            `Moviments Diari: ${importData.data.dailyEntries?.length || 0}\n\n` +
+            `Moviments Diari: ${importData.data.dailyEntries?.length || 0}\n` +
+            `Categories: ${importData.data.categories?.length || 0}\n\n` +
             `Estàs segur?`;
 
           this.notificationService.confirm(confirmMsg, () => {
@@ -116,6 +122,13 @@ export class ExportImportService {
               this.dailyEntryService.importar(importData.data.dailyEntries);
             } else {
               this.dailyEntryService.netejar();
+            }
+
+            // Import categories (with backward compatibility)
+            if (importData.data.categories) {
+              this.categoryService.importar(importData.data.categories);
+            } else {
+              this.categoryService.netejar();
             }
 
             this.notificationService.success("Dades importades correctament!");
