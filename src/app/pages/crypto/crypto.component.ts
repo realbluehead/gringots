@@ -1,4 +1,4 @@
-import { Component, inject } from "@angular/core";
+import { Component, Input, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { CryptoAddress } from "../../models/crypto-address.model";
@@ -15,6 +15,8 @@ import { LucideAngularModule, Pencil, Trash2 } from "lucide-angular";
   templateUrl: "./crypto.component.html",
 })
 export class CryptoComponent {
+  @Input() mode: "all" | "addresses" | "policyIds" = "all";
+
   private cryptoAddressService = inject(CryptoAddressService);
   private policyIdService = inject(PolicyIdService);
   private notificationService = inject(NotificationService);

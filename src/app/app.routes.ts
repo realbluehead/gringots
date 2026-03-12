@@ -19,6 +19,13 @@ export const routes: Routes = [
       import("./pages/events/events.component").then((m) => m.EventsComponent),
   },
   {
+    path: "settings",
+    loadComponent: () =>
+      import("./pages/settings/settings.component").then(
+        (m) => m.SettingsComponent,
+      ),
+  },
+  {
     path: "isins",
     loadComponent: () =>
       import("./pages/isins/isins.component").then((m) => m.IsinsComponent),
@@ -27,5 +34,10 @@ export const routes: Routes = [
     path: "crypto",
     loadComponent: () =>
       import("./pages/crypto/crypto.component").then((m) => m.CryptoComponent),
+  },
+  {
+    path: "diari",
+    loadComponent: () =>
+      import("./pages/diari/diari.component").then((m) => m.DiariComponent),
   },
 ];
