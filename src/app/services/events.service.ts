@@ -1,5 +1,6 @@
 import { Injectable, signal } from "@angular/core";
 import { FinancialEvent } from "../models/financial-event.model";
+import { ensureUniqueIds, generateUniqueId } from "../utils/unique-id.util";
 
 @Injectable({
   providedIn: "root",
@@ -23,7 +24,7 @@ export class EventsService {
           }
           return value;
         }) as FinancialEvent[];
-        this.events.set(events);
+        this.events.set(ensureUniqueIds(events));
       } catch (error) {
         console.error("Error carregant Events:", error);
         this.events.set([]);
@@ -42,7 +43,7 @@ export class EventsService {
   afegir(event: FinancialEvent): void {
     const nouEvent: FinancialEvent = {
       ...event,
-      id: Date.now().toString(),
+      id: generateUniqueId(this.events().map((e) => e.id)),
     };
     this.events.update((events) => [nouEvent, ...events]);
     this.guardarEvents();
@@ -67,7 +68,7 @@ export class EventsService {
       ...e,
       data: e.data instanceof Date ? e.data : new Date(e.data),
     }));
-    this.events.set(eventsProcessats);
+    this.events.set(ensureUniqueIds(eventsProcessats));
     this.guardarEvents();
   }
 

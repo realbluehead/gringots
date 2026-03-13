@@ -5,18 +5,37 @@
       <p class="text-dark-muted">Registra ingressos i despeses del dia a dia</p>
     </div>
 
-    <div>
-      <label class="block text-sm text-dark-muted mb-1">Veure data</label>
-      <input
-        type="date"
-        [(ngModel)]="filtreData"
-        class="px-3 py-2 bg-dark-card border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
-      />
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <div>
+        <label class="block text-sm text-dark-muted mb-1">Data inici</label>
+        <input
+          type="date"
+          [(ngModel)]="filtreDataInici"
+          class="px-3 py-2 bg-dark-card border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+        />
+      </div>
+      <div>
+        <label class="block text-sm text-dark-muted mb-1">Data fi</label>
+        <input
+          type="date"
+          [(ngModel)]="filtreDataFi"
+          class="px-3 py-2 bg-dark-card border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+        />
+      </div>
     </div>
   </div>
 
   <div class="bg-dark-card rounded-lg border border-dark-border p-4">
-    <h3 class="text-lg font-semibold text-dark-text mb-4">Afegir moviment</h3>
+    <div class="flex items-center justify-between gap-3 mb-4">
+      <h3 class="text-lg font-semibold text-dark-text">Afegir moviment</h3>
+      <button
+        (click)="obrirModalImportacio()"
+        class="inline-flex items-center gap-2 bg-dark-bg hover:bg-dark-bg/80 text-dark-text px-3 py-2 rounded-lg text-sm font-medium border border-dark-border transition-colors"
+      >
+        <lucide-icon [img]="FileUp" class="w-4 h-4"></lucide-icon>
+        Importar CSV
+      </button>
+    </div>
 
     <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
       <div>
@@ -52,12 +71,12 @@
       <div>
         <label class="block text-sm text-dark-muted mb-1">Categoria</label>
         <select
-          [(ngModel)]="formulari.categoria"
+          [(ngModel)]="formulari.categoriaId"
           class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
         >
           <option value="">-- Sense categoria --</option>
           @for (cat of categories(); track cat.id) {
-            <option [value]="cat.nom">{{ cat.nom }}</option>
+            <option [value]="cat.id">{{ cat.nom }}</option>
           }
         </select>
       </div>
@@ -128,21 +147,33 @@
     <div
       class="p-4 border-b border-dark-border flex items-center justify-between"
     >
-      <h3 class="text-lg font-semibold text-dark-text">Moviments del dia</h3>
+      <h3 class="text-lg font-semibold text-dark-text">Moviments del rang</h3>
       <p class="text-sm text-dark-muted">
-        {{ entradesDelDia.length }} moviments
+        {{ entradesFiltrades.length }} moviments
       </p>
     </div>
 
-    @if (entradesDelDia.length === 0) {
+    @if (entradesFiltrades.length === 0) {
       <div class="p-6 text-center text-dark-muted">
-        No hi ha moviments per aquesta data.
+        No hi ha moviments dins del rang seleccionat.
       </div>
     } @else {
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead class="border-b border-dark-border">
             <tr>
+              <th
+                class="text-left px-4 py-3 text-sm font-semibold text-dark-text"
+              >
+                <button
+                  (click)="toggleOrdreData()"
+                  class="inline-flex items-center gap-1 hover:text-primary-text transition-colors"
+                  title="Ordenar per data"
+                >
+                  Data
+                  <span class="text-xs text-dark-muted">({{ ordreData }})</span>
+                </button>
+              </th>
               <th
                 class="text-left px-4 py-3 text-sm font-semibold text-dark-text"
               >
@@ -176,63 +207,214 @@
             </tr>
           </thead>
           <tbody>
-            @for (entry of entradesDelDia; track entry.id) {
-              <tr
-                class="border-b border-dark-border/50 hover:bg-dark-bg/50 transition-colors"
-              >
-                <td class="px-4 py-3 text-sm text-dark-text">
-                  {{ entry.concepte }}
-                </td>
-                <td class="px-4 py-3 text-sm text-dark-muted">
-                  @if (getCategoriaColor(entry.categoria); as color) {
-                    <span class="inline-flex items-center gap-1.5">
-                      <span
-                        class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
-                        [style.backgroundColor]="color"
-                      ></span>
-                      {{ entry.categoria }}
+            @for (entry of entradesFiltrades; track entry.id) {
+              @if (entradaEditantId === entry.id && formulariEdicio) {
+                <tr class="border-b border-dark-border bg-dark-bg/80">
+                  <td class="px-4 py-3">
+                    <input
+                      type="date"
+                      [(ngModel)]="formulariEdicio.dataStr"
+                      class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-text"
+                    />
+                  </td>
+                  <td class="px-4 py-3">
+                    <input
+                      type="text"
+                      [(ngModel)]="formulariEdicio.concepte"
+                      class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-text"
+                    />
+                  </td>
+                  <td class="px-4 py-3">
+                    <select
+                      [(ngModel)]="formulariEdicio.categoriaId"
+                      class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-text"
+                    >
+                      <option value="">-- Sense categoria --</option>
+                      @for (cat of categories(); track cat.id) {
+                        <option [value]="cat.id">{{ cat.nom }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td class="px-4 py-3">
+                    <select
+                      [(ngModel)]="formulariEdicio.tipus"
+                      class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-text"
+                    >
+                      <option value="ingres">Ingrés</option>
+                      <option value="despesa">Despesa</option>
+                    </select>
+                  </td>
+                  <td class="px-4 py-3">
+                    <input
+                      type="text"
+                      [(ngModel)]="formulariEdicio.notes"
+                      class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-text"
+                    />
+                  </td>
+                  <td class="px-4 py-3">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      [(ngModel)]="formulariEdicio.import"
+                      class="w-full px-2 py-1 bg-dark-card border border-dark-border rounded text-dark-text text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary-text"
+                    />
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="flex items-center justify-end gap-2">
+                      <button
+                        (click)="guardarEntrada()"
+                        class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                      >
+                        Guardar
+                      </button>
+                      <button
+                        (click)="cancelarEdicioEntrada()"
+                        class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors"
+                      >
+                        Cancel·lar
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @else {
+                <tr
+                  (click)="editarEntrada(entry)"
+                  class="border-b border-dark-border/50 hover:bg-dark-bg/70 transition-colors cursor-pointer"
+                  title="Clica per editar"
+                >
+                  <td class="px-4 py-3 text-sm text-dark-muted">
+                    {{ formatDateDisplay(entry.data) }}
+                  </td>
+                  <td class="px-4 py-3 text-sm text-dark-text">
+                    {{ entry.concepte }}
+                  </td>
+                  <td class="px-4 py-3 text-sm text-dark-muted">
+                    @if (getCategoria(entry.categoriaId); as cat) {
+                      <span class="inline-flex items-center gap-1.5">
+                        <span
+                          class="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
+                          [style.backgroundColor]="cat.color"
+                        ></span>
+                        {{ cat.nom }}
+                      </span>
+                    } @else {
+                      -
+                    }
+                  </td>
+                  <td class="px-4 py-3 text-sm">
+                    <span
+                      class="inline-flex px-2 py-1 rounded-full text-xs font-medium"
+                      [ngClass]="{
+                        'bg-green-500/20 text-green-500':
+                          entry.tipus === 'ingres',
+                        'bg-red-500/20 text-red-500': entry.tipus === 'despesa',
+                      }"
+                    >
+                      {{ entry.tipus === "ingres" ? "Ingrés" : "Despesa" }}
                     </span>
-                  } @else {
-                    {{ entry.categoria || "-" }}
-                  }
-                </td>
-                <td class="px-4 py-3 text-sm">
-                  <span
-                    class="inline-flex px-2 py-1 rounded-full text-xs font-medium"
+                  </td>
+                  <td class="px-4 py-3 text-sm text-dark-muted">
+                    {{ entry.notes || "-" }}
+                  </td>
+                  <td
+                    class="px-4 py-3 text-sm text-right font-semibold"
                     [ngClass]="{
-                      'bg-green-500/20 text-green-500':
-                        entry.tipus === 'ingres',
-                      'bg-red-500/20 text-red-500': entry.tipus === 'despesa',
+                      'text-green-500': entry.tipus === 'ingres',
+                      'text-red-500': entry.tipus === 'despesa',
                     }"
                   >
-                    {{ entry.tipus === "ingres" ? "Ingrés" : "Despesa" }}
-                  </span>
-                </td>
-                <td class="px-4 py-3 text-sm text-dark-muted">
-                  {{ entry.notes || "-" }}
-                </td>
-                <td
-                  class="px-4 py-3 text-sm text-right font-semibold"
-                  [ngClass]="{
-                    'text-green-500': entry.tipus === 'ingres',
-                    'text-red-500': entry.tipus === 'despesa',
-                  }"
-                >
-                  {{ formatCurrency(entry.import) }}
-                </td>
-                <td class="px-4 py-3 text-sm text-right">
-                  <button
-                    (click)="esborrarEntrada(entry.id)"
-                    class="text-red-500 hover:text-red-400 transition-colors"
-                  >
-                    Esborrar
-                  </button>
-                </td>
-              </tr>
+                    {{ formatCurrency(entry.import) }}
+                  </td>
+                  <td class="px-4 py-3 text-sm text-right">
+                    <div class="flex items-center justify-end gap-2">
+                      <button
+                        (click)="$event.stopPropagation(); editarEntrada(entry)"
+                        class="text-blue-500 hover:text-blue-400 px-2 py-1 rounded transition-colors"
+                        title="Editar"
+                      >
+                        <lucide-icon
+                          [img]="Pencil"
+                          class="w-4 h-4"
+                        ></lucide-icon>
+                      </button>
+                      <button
+                        (click)="
+                          $event.stopPropagation(); esborrarEntrada(entry.id)
+                        "
+                        class="text-red-500 hover:text-red-400 px-2 py-1 rounded transition-colors"
+                        title="Esborrar"
+                      >
+                        <lucide-icon
+                          [img]="Trash2"
+                          class="w-4 h-4"
+                        ></lucide-icon>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
             }
           </tbody>
         </table>
       </div>
     }
   </div>
+
+  @if (mostrarModalImportacio) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        class="absolute inset-0 bg-black/70"
+        (click)="tancarModalImportacio()"
+      ></div>
+
+      <div
+        class="relative w-full max-w-3xl bg-dark-card border border-dark-border rounded-xl shadow-2xl"
+      >
+        <div
+          class="px-5 py-4 border-b border-dark-border flex items-center justify-between"
+        >
+          <h3 class="text-lg font-semibold text-dark-text">Importar CSV</h3>
+          <button
+            (click)="tancarModalImportacio()"
+            class="text-dark-muted hover:text-dark-text transition-colors"
+            title="Tancar"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="p-5 space-y-3">
+          <p class="text-sm text-dark-muted">
+            Enganxa el CSV. Es farà servir el camp 1 com a data (dd-mm-aaaa), el
+            camp 3 com a concepte i el camp 4 com a import (valor absolut),
+            sense categoria.
+          </p>
+          <textarea
+            [(ngModel)]="csvImportText"
+            rows="12"
+            placeholder="camp1,camp2,concepte,123.45"
+            class="w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text placeholder:text-dark-muted focus:outline-none focus:ring-2 focus:ring-primary-text font-mono text-sm"
+          ></textarea>
+        </div>
+
+        <div
+          class="px-5 py-4 border-t border-dark-border flex justify-end gap-2"
+        >
+          <button
+            (click)="tancarModalImportacio()"
+            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Cancel·lar
+          </button>
+          <button
+            (click)="importarCsv()"
+            class="bg-primary-text hover:bg-primary-text/90 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Importar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

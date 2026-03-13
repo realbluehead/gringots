@@ -1,5 +1,6 @@
 import { Injectable, signal } from "@angular/core";
 import { Category } from "../models/category.model";
+import { ensureUniqueIds, generateUniqueId } from "../utils/unique-id.util";
 
 @Injectable({
   providedIn: "root",
@@ -17,7 +18,7 @@ export class CategoryService {
     if (data) {
       try {
         const categories = JSON.parse(data) as Category[];
-        this.categories.set(categories);
+        this.categories.set(ensureUniqueIds(categories));
       } catch (error) {
         console.error("Error carregant categories:", error);
         this.categories.set([]);
@@ -36,7 +37,7 @@ export class CategoryService {
   afegir(category: Category): void {
     const novaCategory: Category = {
       ...category,
-      id: Date.now().toString(),
+      id: generateUniqueId(this.categories().map((c) => c.id)),
     };
     this.categories.update((cats) => [...cats, novaCategory]);
     this.guardarCategories();
@@ -55,7 +56,7 @@ export class CategoryService {
   }
 
   importar(categories: Category[]): void {
-    this.categories.set(categories);
+    this.categories.set(ensureUniqueIds(categories));
     this.guardarCategories();
   }
 

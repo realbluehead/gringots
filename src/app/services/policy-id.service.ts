@@ -1,5 +1,6 @@
 import { Injectable, signal } from "@angular/core";
 import { PolicyId } from "../models/policy-id.model";
+import { ensureUniqueIds, generateUniqueId } from "../utils/unique-id.util";
 
 @Injectable({
   providedIn: "root",
@@ -17,7 +18,7 @@ export class PolicyIdService {
     if (data) {
       try {
         const policyIds = JSON.parse(data) as PolicyId[];
-        this.policyIds.set(policyIds);
+        this.policyIds.set(ensureUniqueIds(policyIds));
       } catch (error) {
         console.error("Error carregant policy IDs:", error);
         this.policyIds.set([]);
@@ -40,7 +41,7 @@ export class PolicyIdService {
   afegir(policyId: Omit<PolicyId, "id">): void {
     const nouPolicyId: PolicyId = {
       ...policyId,
-      id: Date.now().toString(),
+      id: generateUniqueId(this.policyIds().map((p) => p.id)),
     };
     this.policyIds.update((policyIds) => [...policyIds, nouPolicyId]);
     this.guardarPolicyIds();
@@ -62,7 +63,7 @@ export class PolicyIdService {
 
   // Mètode per importar policy IDs mantenint els IDs originals
   importar(policyIds: PolicyId[]): void {
-    this.policyIds.set(policyIds);
+    this.policyIds.set(ensureUniqueIds(policyIds));
     this.guardarPolicyIds();
   }
 

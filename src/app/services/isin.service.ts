@@ -1,5 +1,6 @@
 import { Injectable, signal } from "@angular/core";
 import { Isin } from "../models/isin.model";
+import { ensureUniqueIds, generateUniqueId } from "../utils/unique-id.util";
 
 @Injectable({
   providedIn: "root",
@@ -17,7 +18,7 @@ export class IsinService {
     if (data) {
       try {
         const isins = JSON.parse(data) as Isin[];
-        this.isins.set(isins);
+        this.isins.set(ensureUniqueIds(isins));
       } catch (error) {
         console.error("Error carregant ISINs:", error);
         this.isins.set([]);
@@ -40,7 +41,7 @@ export class IsinService {
   afegir(isin: Isin): void {
     const nouIsin: Isin = {
       ...isin,
-      id: Date.now().toString(),
+      id: generateUniqueId(this.isins().map((i) => i.id)),
     };
     this.isins.update((isins) => [...isins, nouIsin]);
     this.guardarIsins();
@@ -60,7 +61,7 @@ export class IsinService {
 
   // Mètode per importar ISINs mantenint els IDs originals
   importar(isins: Isin[]): void {
-    this.isins.set(isins);
+    this.isins.set(ensureUniqueIds(isins));
     this.guardarIsins();
   }
 

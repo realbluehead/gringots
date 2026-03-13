@@ -5,7 +5,7 @@ export interface DailyEntry {
   data: Date;
   tipus: DailyEntryType;
   concepte: string;
-  categoria: string;
+  categoriaId: string | null;
   import: number;
   notes?: string;
 }

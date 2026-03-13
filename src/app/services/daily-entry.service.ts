@@ -1,5 +1,6 @@
 import { Injectable, signal } from "@angular/core";
 import { DailyEntry } from "../models/daily-entry.model";
+import { ensureUniqueIds, generateUniqueId } from "../utils/unique-id.util";
 
 @Injectable({
   providedIn: "root",
@@ -22,7 +23,7 @@ export class DailyEntryService {
           }
           return value;
         }) as DailyEntry[];
-        this.entries.set(entries);
+        this.entries.set(ensureUniqueIds(entries));
       } catch (error) {
         console.error("Error carregant el diari:", error);
         this.entries.set([]);
@@ -41,25 +42,61 @@ export class DailyEntryService {
   afegir(entry: Omit<DailyEntry, "id">): void {
     const novaEntrada: DailyEntry = {
       ...entry,
-      id: Date.now().toString(),
+      id: generateUniqueId(this.entries().map((e) => e.id)),
     };
 
     this.entries.update((entries) => [novaEntrada, ...entries]);
     this.guardarEntrades();
   }
 
-  esborrar(id: string): void {
-    this.entries.update((entries) => entries.filter((e) => e.id !== id));
+  actualitzar(
+    id: string,
+    entryActualitzada: Partial<Omit<DailyEntry, "id">>,
+  ): void {
+    this.entries.update((entries) => {
+      const index = entries.findIndex((e) => e.id === id);
+      if (index === -1) {
+        return entries;
+      }
+
+      const actualitzades = [...entries];
+      actualitzades[index] = { ...actualitzades[index], ...entryActualitzada };
+      return actualitzades;
+    });
     this.guardarEntrades();
   }
 
-  importar(entries: DailyEntry[]): void {
-    const entriesProcessades = entries.map((e) => ({
-      ...e,
-      data: e.data instanceof Date ? e.data : new Date(e.data),
-    }));
+  esborrar(id: string): void {
+    this.entries.update((entries) => {
+      const index = entries.findIndex((e) => e.id === id);
+      if (index === -1) {
+        return entries;
+      }
 
-    this.entries.set(entriesProcessades);
+      const actualitzades = [...entries];
+      actualitzades.splice(index, 1);
+      return actualitzades;
+    });
+    this.guardarEntrades();
+  }
+
+  importar(entries: (DailyEntry & { categoria?: string })[]): void {
+    const entriesProcessades: DailyEntry[] = entries.map((e) => {
+      // Backward compat: old format stored `categoria` as text – drop it
+      const { categoria: _old, ...rest } = e as DailyEntry & {
+        categoria?: string;
+      };
+      return {
+        ...rest,
+        categoriaId: rest.categoriaId ?? null,
+        data:
+          rest.data instanceof Date
+            ? rest.data
+            : new Date(rest.data as unknown as string),
+      };
+    });
+
+    this.entries.set(ensureUniqueIds(entriesProcessades));
     this.guardarEntrades();
   }
 

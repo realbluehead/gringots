@@ -1,5 +1,6 @@
 import { Injectable, signal } from "@angular/core";
 import { CryptoAddress } from "../models/crypto-address.model";
+import { ensureUniqueIds, generateUniqueId } from "../utils/unique-id.util";
 
 @Injectable({
   providedIn: "root",
@@ -17,7 +18,7 @@ export class CryptoAddressService {
     if (data) {
       try {
         const addresses = JSON.parse(data) as CryptoAddress[];
-        this.addresses.set(addresses);
+        this.addresses.set(ensureUniqueIds(addresses));
       } catch (error) {
         console.error("Error carregant adreces crypto:", error);
         this.addresses.set([]);
@@ -40,7 +41,7 @@ export class CryptoAddressService {
   afegir(address: Omit<CryptoAddress, "id">): void {
     const novaAddress: CryptoAddress = {
       ...address,
-      id: Date.now().toString(),
+      id: generateUniqueId(this.addresses().map((a) => a.id)),
     };
     this.addresses.update((addresses) => [...addresses, novaAddress]);
     this.guardarAddresses();
@@ -62,7 +63,7 @@ export class CryptoAddressService {
 
   // Mètode per importar adreces mantenint els IDs originals
   importar(addresses: CryptoAddress[]): void {
-    this.addresses.set(addresses);
+    this.addresses.set(ensureUniqueIds(addresses));
     this.guardarAddresses();
   }
 
