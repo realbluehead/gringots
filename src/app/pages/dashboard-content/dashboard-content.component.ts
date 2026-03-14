@@ -8,6 +8,8 @@ import { IsinService } from "../../services/isin.service";
 import { StockPricesService } from "../../services/stock-prices.service";
 import { CryptoAddressService } from "../../services/crypto-address.service";
 import { PolicyIdService } from "../../services/policy-id.service";
+import { DailyEntryService } from "../../services/daily-entry.service";
+import { CategoryService } from "../../services/category.service";
 import { BaseChartDirective } from "ng2-charts";
 import {
   ChartConfiguration,
@@ -17,6 +19,8 @@ import {
   PointElement,
   LineElement,
   LineController,
+  BarController,
+  BarElement,
   PieController,
   Filler,
   Tooltip,
@@ -31,6 +35,8 @@ ChartJS.register(
   PointElement,
   LineElement,
   LineController,
+  BarController,
+  BarElement,
   PieController,
   Filler,
   Tooltip,
@@ -62,6 +68,8 @@ export class DashboardContentComponent implements OnInit {
   private stockPricesService = inject(StockPricesService);
   private cryptoAddressService = inject(CryptoAddressService);
   private policyIdService = inject(PolicyIdService);
+  private dailyEntryService = inject(DailyEntryService);
+  private categoryService = inject(CategoryService);
   private http = inject(HttpClient);
 
   stockPrices: Map<string, number> = new Map();
@@ -225,6 +233,255 @@ export class DashboardContentComponent implements OnInit {
         grid: {
           color: "#334155",
         },
+      },
+    },
+  };
+
+  activeTab = signal<"global" | "cashflow">("global");
+
+  // Cashflow tab
+  private localDateStr(d: Date): string {
+    return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d.getDate().toString().padStart(2, "0")}`;
+  }
+
+  cashflowDateFrom = signal<string>(
+    this.localDateStr(
+      new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    ),
+  );
+  cashflowDateTo = signal<string>(this.localDateStr(new Date()));
+  cashflowPeriodicity = signal<"diari" | "setmanal" | "mensual">("diari");
+
+  cashflowChartData = computed<ChartConfiguration<"line">["data"]>(() => {
+    const entries = this.dailyEntryService.obtenirTots()();
+    const from = this.cashflowDateFrom();
+    const to = this.cashflowDateTo();
+    const periodicity = this.cashflowPeriodicity();
+
+    const filtered = entries.filter((e) => {
+      const ds = this.localDateStr(new Date(e.data));
+      return ds >= from && ds <= to;
+    });
+
+    const getGroupKey = (date: Date): string => {
+      if (periodicity === "diari") {
+        return this.localDateStr(date);
+      } else if (periodicity === "setmanal") {
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - d.getDay() + (d.getDay() === 0 ? -6 : 1));
+        return this.localDateStr(d);
+      } else {
+        const [y, m] = this.localDateStr(date).split("-");
+        return `${y}-${m}`;
+      }
+    };
+
+    const formatLabel = (key: string): string => {
+      if (periodicity === "mensual") {
+        const [y, m] = key.split("-");
+        return `${m}/${y}`;
+      }
+      const [y, m, d] = key.split("-");
+      return `${d}/${m}/${y}`;
+    };
+
+    const groupMap = new Map<string, { ingressos: number; despeses: number }>();
+    filtered.forEach((e) => {
+      const key = getGroupKey(new Date(e.data));
+      if (!groupMap.has(key)) groupMap.set(key, { ingressos: 0, despeses: 0 });
+      const g = groupMap.get(key)!;
+      if (e.tipus === "ingres") g.ingressos += e.import;
+      else g.despeses += e.import;
+    });
+
+    const sortedKeys = Array.from(groupMap.keys()).sort();
+    const labels = sortedKeys.map(formatLabel);
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: "Ingressos",
+          data: sortedKeys.map((k) => groupMap.get(k)!.ingressos),
+          backgroundColor: "rgba(16, 185, 129, 0.15)",
+          borderColor: "#10b981",
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        },
+        {
+          label: "Despeses",
+          data: sortedKeys.map((k) => groupMap.get(k)!.despeses),
+          backgroundColor: "rgba(239, 68, 68, 0.15)",
+          borderColor: "#ef4444",
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        },
+      ],
+    };
+  });
+
+  cashflowPieChartData = computed<ChartConfiguration<"pie">["data"]>(() => {
+    const entries = this.dailyEntryService.obtenirTots()();
+    const categories = this.categoryService.obtenirTotes()();
+    const from = this.cashflowDateFrom();
+    const to = this.cashflowDateTo();
+
+    const filtered = entries.filter((e) => {
+      const ds = this.localDateStr(new Date(e.data));
+      return e.tipus === "despesa" && ds >= from && ds <= to;
+    });
+
+    const catMap = new Map<string, number>();
+    filtered.forEach((e) => {
+      const key = e.categoriaId ?? "__sense_categoria__";
+      catMap.set(key, (catMap.get(key) ?? 0) + e.import);
+    });
+
+    const COLORS = [
+      "#6366f1",
+      "#ec4899",
+      "#14b8a6",
+      "#f59e0b",
+      "#8b5cf6",
+      "#06b6d4",
+      "#f97316",
+      "#10b981",
+      "#a855f7",
+      "#0ea5e9",
+      "#84cc16",
+      "#ef4444",
+    ];
+
+    const sorted = Array.from(catMap.entries()).sort((a, b) => a[1] - b[1]);
+
+    const labels: string[] = [];
+    const data: number[] = [];
+    const backgroundColors: string[] = [];
+    let colorIdx = 0;
+
+    sorted.forEach(([catId, total]) => {
+      const cat = categories.find((c) => c.id === catId);
+      labels.push(cat?.nom ?? "Sense categoria");
+      data.push(total);
+      backgroundColors.push(cat?.color ?? COLORS[colorIdx % COLORS.length]);
+      colorIdx++;
+    });
+
+    return {
+      labels,
+      datasets: [
+        {
+          data,
+          backgroundColor: backgroundColors,
+          borderColor: "#1e293b",
+          borderWidth: 2,
+        },
+      ],
+    };
+  });
+
+  cashflowPieChartOptions: ChartConfiguration<"pie">["options"] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "bottom",
+        labels: {
+          color: "#f1f5f9",
+          font: { size: 11 },
+          padding: 12,
+          generateLabels: (chart) => {
+            const data = chart.data;
+            if (data.labels && data.datasets.length) {
+              const dataset = data.datasets[0];
+              const total = (dataset.data as number[]).reduce(
+                (a, b) => a + b,
+                0,
+              );
+              return data.labels.map((label, i) => {
+                const value = dataset.data[i] as number;
+                const pct =
+                  total > 0 ? ((value / total) * 100).toFixed(1) : "0";
+                return {
+                  text: `${label} (${pct}%)`,
+                  fillStyle: (dataset.backgroundColor as string[])[i],
+                  strokeStyle: dataset.borderColor as string,
+                  lineWidth: dataset.borderWidth as number,
+                  fontColor: "#f1f5f9",
+                  hidden: false,
+                  index: i,
+                };
+              });
+            }
+            return [];
+          },
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const value = context.parsed ?? 0;
+            const total = (context.dataset.data as number[]).reduce(
+              (a: number, b: number) => a + b,
+              0,
+            );
+            const pct = total > 0 ? ((value / total) * 100).toFixed(1) : "0";
+            return `${pct}%`;
+          },
+        },
+      },
+      datalabels: {
+        display: false,
+      },
+    },
+  };
+
+  cashflowChartOptions: ChartConfiguration<"line">["options"] = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: {
+        display: true,
+        position: "top",
+        labels: { color: "#f1f5f9", font: { size: 12 } },
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const value = Math.abs(context.parsed.y ?? 0);
+            const formatted = new Intl.NumberFormat("ca-ES", {
+              style: "currency",
+              currency: "EUR",
+            }).format(value);
+            return `${context.dataset.label}: ${formatted}`;
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        ticks: { color: "#94a3b8", maxRotation: 45, minRotation: 45 },
+        grid: { color: "#334155" },
+      },
+      y: {
+        ticks: {
+          color: "#94a3b8",
+          callback: (value) =>
+            new Intl.NumberFormat("ca-ES", {
+              style: "currency",
+              currency: "EUR",
+              notation: "compact",
+              maximumFractionDigits: 0,
+            }).format(value as number),
+        },
+        grid: { color: "#334155" },
       },
     },
   };

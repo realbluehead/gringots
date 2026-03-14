@@ -126,12 +126,16 @@ export class DiariComponent {
   }
 
   editarEntrada(entry: DailyEntry): void {
+    const categoriaIdPerDefecte =
+      entry.categoriaId ??
+      this.buscarCategoriaPerConcepte(entry.concepte, entry.id);
+
     this.entradaEditantId = entry.id;
     this.formulariEdicio = {
       dataStr: this.toLocalDateString(new Date(entry.data)),
       tipus: entry.tipus,
       concepte: entry.concepte,
-      categoriaId: entry.categoriaId,
+      categoriaId: categoriaIdPerDefecte,
       import: entry.import,
       notes: entry.notes ?? "",
     };
@@ -360,6 +364,25 @@ export class DiariComponent {
 
     // Normalize repeated spaces left after cleanup.
     return concepte.replace(/\s{2,}/g, " ");
+  }
+
+  private buscarCategoriaPerConcepte(
+    concepte: string,
+    excludeEntryId: string,
+  ): string | null {
+    const concepteNormalitzat = concepte.trim().toLocaleLowerCase();
+    if (!concepteNormalitzat) {
+      return null;
+    }
+
+    const trobada = this.entries().find(
+      (entry) =>
+        entry.id !== excludeEntryId &&
+        !!entry.categoriaId &&
+        entry.concepte.trim().toLocaleLowerCase() === concepteNormalitzat,
+    );
+
+    return trobada?.categoriaId ?? null;
   }
 
   private avuiLocal(): string {
