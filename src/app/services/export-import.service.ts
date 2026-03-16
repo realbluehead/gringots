@@ -23,6 +23,7 @@ export interface GringotsExport {
     policyIds: PolicyId[];
     dailyEntries?: DailyEntry[];
     categories?: Category[];
+    dashboardLayout?: unknown;
   };
 }
 
@@ -30,6 +31,9 @@ export interface GringotsExport {
   providedIn: "root",
 })
 export class ExportImportService {
+  private readonly DASHBOARD_LAYOUT_STORAGE_KEY =
+    "gringots_dashboard_layout_v1";
+
   private isinService = inject(IsinService);
   private eventsService = inject(EventsService);
   private cryptoAddressService = inject(CryptoAddressService);
@@ -50,6 +54,7 @@ export class ExportImportService {
         policyIds: this.policyIdService.obtenirTots()(),
         dailyEntries: this.dailyEntryService.obtenirTots()(),
         categories: this.categoryService.obtenirTotes()(),
+        dashboardLayout: this.getDashboardLayoutConfig(),
       },
     };
 
@@ -131,6 +136,15 @@ export class ExportImportService {
               this.categoryService.netejar();
             }
 
+            if (importData.data.dashboardLayout) {
+              localStorage.setItem(
+                this.DASHBOARD_LAYOUT_STORAGE_KEY,
+                JSON.stringify(importData.data.dashboardLayout),
+              );
+            } else {
+              localStorage.removeItem(this.DASHBOARD_LAYOUT_STORAGE_KEY);
+            }
+
             this.notificationService.success("Dades importades correctament!");
           });
 
@@ -150,5 +164,18 @@ export class ExportImportService {
 
       reader.readAsText(file);
     });
+  }
+
+  private getDashboardLayoutConfig(): unknown {
+    const raw = localStorage.getItem(this.DASHBOARD_LAYOUT_STORAGE_KEY);
+    if (!raw) {
+      return undefined;
+    }
+
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return undefined;
+    }
   }
 }

@@ -12,6 +12,12 @@ import { DailyEntryService } from "../../services/daily-entry.service";
 import { CategoryService } from "../../services/category.service";
 import { BaseChartDirective } from "ng2-charts";
 import {
+  CdkDrag,
+  CdkDragDrop,
+  CdkDropList,
+  moveItemInArray,
+} from "@angular/cdk/drag-drop";
+import {
   ChartConfiguration,
   Chart as ChartJS,
   CategoryScale,
@@ -56,13 +62,51 @@ interface Asset {
   profitLossPercent?: number;
 }
 
+type GlobalPanelId =
+  | "assets"
+  | "crypto"
+  | "runway"
+  | "assetsPie"
+  | "portfolioTimeline";
+type CashflowPanelId = "cashflowLine" | "cashflowPie";
+type GlobalPanelSpan = 1 | 2 | 3 | 4;
+type CashflowPanelSpan = 1 | 2 | 3;
+
+interface DashboardLayoutConfig {
+  globalPanelOrder: GlobalPanelId[];
+  globalPanelSpans: Record<GlobalPanelId, GlobalPanelSpan>;
+  cashflowPanelOrder: CashflowPanelId[];
+  cashflowPanelSpans: Record<CashflowPanelId, CashflowPanelSpan>;
+}
+
 @Component({
   selector: "app-dashboard-content",
   standalone: true,
-  imports: [CommonModule, FormsModule, BaseChartDirective],
+  imports: [
+    CommonModule,
+    FormsModule,
+    BaseChartDirective,
+    CdkDropList,
+    CdkDrag,
+  ],
   templateUrl: "./dashboard-content.component.html",
+  styles: [
+    `
+      @media (min-width: 1024px) {
+        .global-panel {
+          grid-column: span var(--global-span) / span var(--global-span);
+        }
+
+        .cashflow-panel {
+          grid-column: span var(--cashflow-span) / span var(--cashflow-span);
+        }
+      }
+    `,
+  ],
 })
 export class DashboardContentComponent implements OnInit {
+  private readonly LAYOUT_STORAGE_KEY = "gringots_dashboard_layout_v1";
+
   private eventsService = inject(EventsService);
   private isinService = inject(IsinService);
   private stockPricesService = inject(StockPricesService);
@@ -77,6 +121,29 @@ export class DashboardContentComponent implements OnInit {
   totalProfitLoss: number = 0;
   totalProfitLossPercent: number = 0;
   totalValorActual: number = 0;
+
+  globalPanelOrder = signal<GlobalPanelId[]>([
+    "assets",
+    "crypto",
+    "runway",
+    "assetsPie",
+    "portfolioTimeline",
+  ]);
+  globalPanelSpans = signal<Record<GlobalPanelId, GlobalPanelSpan>>({
+    assets: 2,
+    crypto: 1,
+    runway: 1,
+    assetsPie: 2,
+    portfolioTimeline: 2,
+  });
+  cashflowPanelOrder = signal<CashflowPanelId[]>([
+    "cashflowLine",
+    "cashflowPie",
+  ]);
+  cashflowPanelSpans = signal<Record<CashflowPanelId, CashflowPanelSpan>>({
+    cashflowLine: 2,
+    cashflowPie: 1,
+  });
 
   // Crypto assets
   cryptoAssets: any[] = [];
@@ -664,7 +731,168 @@ export class DashboardContentComponent implements OnInit {
     return this.assets().reduce((sum, asset) => sum + asset.costTotal, 0);
   });
 
+  private saveLayoutConfig(): void {
+    const config: DashboardLayoutConfig = {
+      globalPanelOrder: this.globalPanelOrder(),
+      globalPanelSpans: this.globalPanelSpans(),
+      cashflowPanelOrder: this.cashflowPanelOrder(),
+      cashflowPanelSpans: this.cashflowPanelSpans(),
+    };
+
+    localStorage.setItem(this.LAYOUT_STORAGE_KEY, JSON.stringify(config));
+  }
+
+  private loadLayoutConfig(): void {
+    const raw = localStorage.getItem(this.LAYOUT_STORAGE_KEY);
+    if (!raw) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as Partial<DashboardLayoutConfig>;
+
+      const globalOrder = parsed.globalPanelOrder;
+      if (
+        Array.isArray(globalOrder) &&
+        globalOrder.length === 5 &&
+        ["assets", "crypto", "runway", "assetsPie", "portfolioTimeline"].every(
+          (id) => globalOrder.includes(id as GlobalPanelId),
+        )
+      ) {
+        this.globalPanelOrder.set(globalOrder as GlobalPanelId[]);
+      }
+
+      const cashflowOrder = parsed.cashflowPanelOrder;
+      if (
+        Array.isArray(cashflowOrder) &&
+        cashflowOrder.length === 2 &&
+        ["cashflowLine", "cashflowPie"].every((id) =>
+          cashflowOrder.includes(id as CashflowPanelId),
+        )
+      ) {
+        this.cashflowPanelOrder.set(cashflowOrder as CashflowPanelId[]);
+      }
+
+      const globalSpans = parsed.globalPanelSpans;
+      if (globalSpans) {
+        this.globalPanelSpans.set({
+          assets:
+            globalSpans.assets === 1 ||
+            globalSpans.assets === 2 ||
+            globalSpans.assets === 3 ||
+            globalSpans.assets === 4
+              ? globalSpans.assets
+              : this.globalPanelSpans().assets,
+          crypto:
+            globalSpans.crypto === 1 ||
+            globalSpans.crypto === 2 ||
+            globalSpans.crypto === 3 ||
+            globalSpans.crypto === 4
+              ? globalSpans.crypto
+              : this.globalPanelSpans().crypto,
+          runway:
+            globalSpans.runway === 1 ||
+            globalSpans.runway === 2 ||
+            globalSpans.runway === 3 ||
+            globalSpans.runway === 4
+              ? globalSpans.runway
+              : this.globalPanelSpans().runway,
+          assetsPie:
+            globalSpans.assetsPie === 1 ||
+            globalSpans.assetsPie === 2 ||
+            globalSpans.assetsPie === 3 ||
+            globalSpans.assetsPie === 4
+              ? globalSpans.assetsPie
+              : this.globalPanelSpans().assetsPie,
+          portfolioTimeline:
+            globalSpans.portfolioTimeline === 1 ||
+            globalSpans.portfolioTimeline === 2 ||
+            globalSpans.portfolioTimeline === 3 ||
+            globalSpans.portfolioTimeline === 4
+              ? globalSpans.portfolioTimeline
+              : this.globalPanelSpans().portfolioTimeline,
+        });
+      }
+
+      const cashflowSpans = parsed.cashflowPanelSpans;
+      if (cashflowSpans) {
+        this.cashflowPanelSpans.set({
+          cashflowLine:
+            cashflowSpans.cashflowLine === 1 ||
+            cashflowSpans.cashflowLine === 2 ||
+            cashflowSpans.cashflowLine === 3
+              ? cashflowSpans.cashflowLine
+              : this.cashflowPanelSpans().cashflowLine,
+          cashflowPie:
+            cashflowSpans.cashflowPie === 1 ||
+            cashflowSpans.cashflowPie === 2 ||
+            cashflowSpans.cashflowPie === 3
+              ? cashflowSpans.cashflowPie
+              : this.cashflowPanelSpans().cashflowPie,
+        });
+      }
+    } catch (error) {
+      console.error("Error carregant configuracio de layout:", error);
+    }
+  }
+
+  setGlobalPanelSpan(panelId: GlobalPanelId, value: number): void {
+    const span = Number(value);
+    const safeSpan: GlobalPanelSpan =
+      span === 1 || span === 2 || span === 3 || span === 4 ? span : 1;
+
+    this.globalPanelSpans.update((state) => ({
+      ...state,
+      [panelId]: safeSpan,
+    }));
+    this.saveLayoutConfig();
+  }
+
+  getGlobalPanelSpan(panelId: GlobalPanelId): GlobalPanelSpan {
+    return this.globalPanelSpans()[panelId];
+  }
+
+  setCashflowPanelSpan(panelId: CashflowPanelId, value: number): void {
+    const span = Number(value);
+    const safeSpan: CashflowPanelSpan =
+      span === 1 || span === 2 || span === 3 ? span : 1;
+
+    this.cashflowPanelSpans.update((state) => ({
+      ...state,
+      [panelId]: safeSpan,
+    }));
+    this.saveLayoutConfig();
+  }
+
+  getCashflowPanelSpan(panelId: CashflowPanelId): CashflowPanelSpan {
+    return this.cashflowPanelSpans()[panelId];
+  }
+
+  dropGlobalPanels(event: CdkDragDrop<GlobalPanelId[]>): void {
+    if (event.previousIndex === event.currentIndex) {
+      return;
+    }
+
+    const next = [...this.globalPanelOrder()];
+    moveItemInArray(next, event.previousIndex, event.currentIndex);
+    this.globalPanelOrder.set(next);
+    this.saveLayoutConfig();
+  }
+
+  dropCashflowPanels(event: CdkDragDrop<CashflowPanelId[]>): void {
+    if (event.previousIndex === event.currentIndex) {
+      return;
+    }
+
+    const next = [...this.cashflowPanelOrder()];
+    moveItemInArray(next, event.previousIndex, event.currentIndex);
+    this.cashflowPanelOrder.set(next);
+    this.saveLayoutConfig();
+  }
+
   ngOnInit() {
+    this.loadLayoutConfig();
+
     // Inicialitzar estalvis amb el cost total del portafoli (arrodonit)
     this.estalvis = Math.round(this.totalCostPortafoli());
     this.calculateRunway();
