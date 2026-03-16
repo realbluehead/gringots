@@ -1,0 +1,58 @@
+<div class="bg-dark-card rounded-lg border border-dark-border p-6">
+  <div class="flex items-center justify-between mb-4 gap-3">
+    <h3 class="text-xl font-semibold text-dark-text">Cryptoactius</h3>
+    <select
+      [ngModel]="span"
+      (ngModelChange)="onSpanChange($event)"
+      class="px-2 py-1 bg-dark-bg border border-dark-border rounded text-xs text-dark-text focus:outline-none focus:ring-1 focus:ring-primary-text"
+      title="Columnes"
+    >
+      @for (option of spanOptions; track option) {
+        <option [ngValue]="option">{{ option }} col</option>
+      }
+    </select>
+  </div>
+
+  @if (groups.length > 0) {
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="border-b border-dark-border">
+          <tr>
+            <th
+              class="text-left px-4 py-3 text-sm font-semibold text-dark-text"
+            >
+              Actiu
+            </th>
+            <th
+              class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
+            >
+              Quantitat
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (group of groups; track group.policyId) {
+            <tr
+              class="border-b border-dark-border/50 hover:bg-dark-bg/50 transition-colors"
+            >
+              <td class="px-4 py-3 text-sm text-dark-text">
+                <div class="truncate max-w-md" [title]="group.policyId">
+                  {{ group.assetName }}
+                </div>
+              </td>
+              <td class="px-4 py-3 text-sm text-right text-dark-text">
+                <span
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-text/20 text-primary-text"
+                >
+                  {{ group.count }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <p class="text-dark-muted text-center py-8">No hi ha cryptoactius</p>
+  }
+</div>

@@ -1,0 +1,27 @@
+<div class="bg-dark-card rounded-lg border border-dark-border p-6">
+  <div class="flex items-center justify-between mb-4 gap-3">
+    <h3 class="text-xl font-semibold text-dark-text">Distribucio d'actius</h3>
+    <select
+      [ngModel]="span"
+      (ngModelChange)="onSpanChange($event)"
+      class="px-2 py-1 bg-dark-bg border border-dark-border rounded text-xs text-dark-text focus:outline-none focus:ring-1 focus:ring-primary-text"
+      title="Columnes"
+    >
+      @for (option of spanOptions; track option) {
+        <option [ngValue]="option">{{ option }} col</option>
+      }
+    </select>
+  </div>
+  @if (hasData) {
+    <div class="flex justify-center items-center" style="height: 500px">
+      <canvas
+        baseChart
+        [data]="chartData"
+        [options]="chartOptions"
+        [type]="'pie'"
+      ></canvas>
+    </div>
+  } @else {
+    <p class="text-dark-muted text-center py-16">No hi ha dades d'actius</p>
+  }
+</div>

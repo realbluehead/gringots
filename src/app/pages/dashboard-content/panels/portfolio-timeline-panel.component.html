@@ -1,0 +1,41 @@
+<div class="bg-dark-card rounded-lg border border-dark-border p-6">
+  <div class="flex justify-between items-center mb-4">
+    <h3 class="text-xl font-semibold text-dark-text">Evolucio inversio</h3>
+    <div class="flex items-center gap-2">
+      <select
+        [ngModel]="periodicity"
+        (ngModelChange)="onPeriodicityChange($event)"
+        class="px-3 py-1.5 bg-dark-bg border border-dark-border rounded-lg text-dark-text text-sm focus:outline-none focus:ring-2 focus:ring-primary-text"
+      >
+        <option value="diari">Diari</option>
+        <option value="setmanal">Setmanal</option>
+        <option value="mensual">Mensual</option>
+      </select>
+      <select
+        [ngModel]="span"
+        (ngModelChange)="onSpanChange($event)"
+        class="px-2 py-1 bg-dark-bg border border-dark-border rounded text-xs text-dark-text focus:outline-none focus:ring-1 focus:ring-primary-text"
+        title="Columnes"
+      >
+        @for (option of spanOptions; track option) {
+          <option [ngValue]="option">{{ option }} col</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  @if (hasData) {
+    <div class="flex justify-center items-center" style="height: 500px">
+      <canvas
+        baseChart
+        [data]="chartData"
+        [options]="chartOptions"
+        [type]="'line'"
+      ></canvas>
+    </div>
+  } @else {
+    <p class="text-dark-muted text-center py-16">
+      No hi ha historial d'inversio
+    </p>
+  }
+</div>

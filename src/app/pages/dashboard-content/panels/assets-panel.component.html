@@ -1,0 +1,166 @@
+<div class="bg-dark-card rounded-lg border border-dark-border p-6">
+  <div class="flex items-center justify-between mb-4 gap-3">
+    <h3 class="text-xl font-semibold text-dark-text">Actius</h3>
+    <select
+      [ngModel]="span"
+      (ngModelChange)="onSpanChange($event)"
+      class="px-2 py-1 bg-dark-bg border border-dark-border rounded text-xs text-dark-text focus:outline-none focus:ring-1 focus:ring-primary-text"
+      title="Columnes"
+    >
+      @for (option of spanOptions; track option) {
+        <option [ngValue]="option">{{ option }} col</option>
+      }
+    </select>
+  </div>
+
+  @if (assets.length === 0) {
+    <p class="text-dark-muted text-center py-8">
+      No tens cap actiu al portafoli
+    </p>
+  } @else {
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="border-b border-dark-border">
+          <tr>
+            <th
+              class="text-left px-4 py-3 text-sm font-semibold text-dark-text"
+            >
+              Actiu
+            </th>
+            <th
+              class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
+            >
+              Accions
+            </th>
+            <th
+              class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
+            >
+              Cost Total
+            </th>
+            <th
+              class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
+            >
+              Cost Mitja
+            </th>
+            <th
+              class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
+            >
+              Preu Actual
+            </th>
+            <th
+              class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
+            >
+              Valor Actual
+            </th>
+            <th
+              class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
+            >
+              P&L
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (asset of assets; track asset.isin) {
+            <tr
+              class="border-b border-dark-border/50 hover:bg-dark-bg/50 transition-colors"
+            >
+              <td class="px-4 py-3 text-sm text-dark-text">
+                <div class="font-medium">{{ asset.ticker }}</div>
+                <div class="text-xs text-dark-muted">{{ asset.nom }}</div>
+              </td>
+              <td class="px-4 py-3 text-sm text-right text-dark-text">
+                {{ asset.quantitatAccions }}
+              </td>
+              <td
+                class="px-4 py-3 text-sm text-right font-semibold text-dark-text"
+              >
+                {{ formatCurrency(asset.costTotal) }}
+              </td>
+              <td class="px-4 py-3 text-sm text-right text-dark-muted">
+                {{ formatCurrency(asset.costTotal / asset.quantitatAccions) }}
+              </td>
+              <td class="px-4 py-3 text-sm text-right text-dark-text">
+                @if (asset.preuActual !== undefined) {
+                  {{ formatCurrency(asset.preuActual) }}
+                } @else {
+                  <span class="text-dark-muted">-</span>
+                }
+              </td>
+              <td
+                class="px-4 py-3 text-sm text-right font-semibold text-dark-text"
+              >
+                @if (asset.valorActual !== undefined) {
+                  {{ formatCurrency(asset.valorActual) }}
+                } @else {
+                  <span class="text-dark-muted">-</span>
+                }
+              </td>
+              <td class="px-4 py-3 text-sm text-right font-semibold">
+                @if (asset.profitLoss !== undefined) {
+                  <div
+                    [ngClass]="{
+                      'text-green-500': asset.profitLoss > 0,
+                      'text-red-500': asset.profitLoss < 0,
+                      'text-dark-muted': asset.profitLoss === 0,
+                    }"
+                  >
+                    <div>{{ formatCurrency(asset.profitLoss) }}</div>
+                    <div class="text-xs">
+                      ({{ asset.profitLossPercent?.toFixed(2) }}%)
+                    </div>
+                  </div>
+                } @else {
+                  <span class="text-dark-muted">-</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+        <tfoot class="border-t-2 border-dark-border">
+          <tr>
+            <td
+              colspan="2"
+              class="px-4 py-3 text-sm font-semibold text-dark-text text-right"
+            >
+              Total:
+            </td>
+            <td
+              class="px-4 py-3 text-sm text-right font-bold text-primary-text"
+            >
+              {{ formatCurrency(totalCostPortafoli) }}
+            </td>
+            <td></td>
+            <td></td>
+            <td
+              class="px-4 py-3 text-sm text-right font-bold text-primary-text"
+            >
+              @if (totalValorActual > 0) {
+                {{ formatCurrency(totalValorActual) }}
+              } @else {
+                <span class="text-dark-muted">-</span>
+              }
+            </td>
+            <td class="px-4 py-3 text-sm text-right font-bold">
+              @if (totalProfitLoss !== 0) {
+                <div
+                  [ngClass]="{
+                    'text-green-500': totalProfitLoss > 0,
+                    'text-red-500': totalProfitLoss < 0,
+                    'text-dark-muted': totalProfitLoss === 0,
+                  }"
+                >
+                  <div>{{ formatCurrency(totalProfitLoss) }}</div>
+                  <div class="text-xs">
+                    ({{ totalProfitLossPercent.toFixed(2) }}%)
+                  </div>
+                </div>
+              } @else {
+                <span class="text-dark-muted">-</span>
+              }
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  }
+</div>

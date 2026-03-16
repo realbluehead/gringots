@@ -1,4 +1,11 @@
-import { Component, inject, OnInit, computed, signal } from "@angular/core";
+import {
+  Component,
+  Type,
+  inject,
+  OnInit,
+  computed,
+  signal,
+} from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { HttpClient } from "@angular/common/http";
@@ -10,7 +17,6 @@ import { CryptoAddressService } from "../../services/crypto-address.service";
 import { PolicyIdService } from "../../services/policy-id.service";
 import { DailyEntryService } from "../../services/daily-entry.service";
 import { CategoryService } from "../../services/category.service";
-import { BaseChartDirective } from "ng2-charts";
 import {
   CdkDrag,
   CdkDragDrop,
@@ -33,6 +39,13 @@ import {
   Legend,
   ArcElement,
 } from "chart.js";
+import { AssetsPanelComponent } from "./panels/assets-panel.component";
+import { CryptoPanelComponent } from "./panels/crypto-panel.component";
+import { RunwayPanelComponent } from "./panels/runway-panel.component";
+import { AssetsPiePanelComponent } from "./panels/assets-pie-panel.component";
+import { PortfolioTimelinePanelComponent } from "./panels/portfolio-timeline-panel.component";
+import { CashflowLinePanelComponent } from "./panels/cashflow-line-panel.component";
+import { CashflowPiePanelComponent } from "./panels/cashflow-pie-panel.component";
 
 // Registrar components de Chart.js
 ChartJS.register(
@@ -69,8 +82,33 @@ type GlobalPanelId =
   | "assetsPie"
   | "portfolioTimeline";
 type CashflowPanelId = "cashflowLine" | "cashflowPie";
+type DashboardTabId = "global" | "cashflow";
+type DashboardPanelId = GlobalPanelId | CashflowPanelId;
+type PanelComponentKey =
+  | "assetsPanel"
+  | "cryptoPanel"
+  | "runwayPanel"
+  | "assetsPiePanel"
+  | "portfolioTimelinePanel"
+  | "cashflowLinePanel"
+  | "cashflowPiePanel";
+
 type GlobalPanelSpan = 1 | 2 | 3 | 4;
 type CashflowPanelSpan = 1 | 2 | 3;
+
+interface DashboardPanelJsonConfig {
+  id: DashboardPanelId;
+  label: string;
+  component: PanelComponentKey;
+  maxSpan: 3 | 4;
+}
+
+interface DashboardTabJsonConfig {
+  id: DashboardTabId;
+  label: string;
+  maxColumns: 3 | 4;
+  panelIds: DashboardPanelId[];
+}
 
 interface DashboardLayoutConfig {
   globalPanelOrder: GlobalPanelId[];
@@ -79,26 +117,90 @@ interface DashboardLayoutConfig {
   cashflowPanelSpans: Record<CashflowPanelId, CashflowPanelSpan>;
 }
 
+const PANEL_COMPONENTS: Record<PanelComponentKey, Type<unknown>> = {
+  assetsPanel: AssetsPanelComponent,
+  cryptoPanel: CryptoPanelComponent,
+  runwayPanel: RunwayPanelComponent,
+  assetsPiePanel: AssetsPiePanelComponent,
+  portfolioTimelinePanel: PortfolioTimelinePanelComponent,
+  cashflowLinePanel: CashflowLinePanelComponent,
+  cashflowPiePanel: CashflowPiePanelComponent,
+};
+
+// JSON-like dashboard config so tabs/panels can come from persisted or remote config later.
+const DASHBOARD_PANELS_CONFIG: Record<
+  DashboardPanelId,
+  DashboardPanelJsonConfig
+> = {
+  assets: {
+    id: "assets",
+    label: "Actius",
+    component: "assetsPanel",
+    maxSpan: 4,
+  },
+  crypto: {
+    id: "crypto",
+    label: "Cryptoactius",
+    component: "cryptoPanel",
+    maxSpan: 4,
+  },
+  runway: {
+    id: "runway",
+    label: "Runway",
+    component: "runwayPanel",
+    maxSpan: 4,
+  },
+  assetsPie: {
+    id: "assetsPie",
+    label: "Distribucio d'actius",
+    component: "assetsPiePanel",
+    maxSpan: 4,
+  },
+  portfolioTimeline: {
+    id: "portfolioTimeline",
+    label: "Evolucio inversio",
+    component: "portfolioTimelinePanel",
+    maxSpan: 4,
+  },
+  cashflowLine: {
+    id: "cashflowLine",
+    label: "Cashflow diari",
+    component: "cashflowLinePanel",
+    maxSpan: 3,
+  },
+  cashflowPie: {
+    id: "cashflowPie",
+    label: "Despeses per categoria",
+    component: "cashflowPiePanel",
+    maxSpan: 3,
+  },
+};
+
+const DASHBOARD_TABS_CONFIG: DashboardTabJsonConfig[] = [
+  {
+    id: "global",
+    label: "Global",
+    maxColumns: 4,
+    panelIds: ["assets", "crypto", "runway", "assetsPie", "portfolioTimeline"],
+  },
+  {
+    id: "cashflow",
+    label: "Cashflow",
+    maxColumns: 3,
+    panelIds: ["cashflowLine", "cashflowPie"],
+  },
+];
+
 @Component({
   selector: "app-dashboard-content",
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    BaseChartDirective,
-    CdkDropList,
-    CdkDrag,
-  ],
+  imports: [CommonModule, FormsModule, CdkDropList, CdkDrag],
   templateUrl: "./dashboard-content.component.html",
   styles: [
     `
       @media (min-width: 1024px) {
-        .global-panel {
-          grid-column: span var(--global-span) / span var(--global-span);
-        }
-
-        .cashflow-panel {
-          grid-column: span var(--cashflow-span) / span var(--cashflow-span);
+        .dashboard-panel {
+          grid-column: span var(--panel-span) / span var(--panel-span);
         }
       }
     `,
@@ -106,6 +208,8 @@ interface DashboardLayoutConfig {
 })
 export class DashboardContentComponent implements OnInit {
   private readonly LAYOUT_STORAGE_KEY = "gringots_dashboard_layout_v1";
+  tabsConfig = DASHBOARD_TABS_CONFIG;
+  panelsConfig = DASHBOARD_PANELS_CONFIG;
 
   private eventsService = inject(EventsService);
   private isinService = inject(IsinService);
@@ -304,7 +408,7 @@ export class DashboardContentComponent implements OnInit {
     },
   };
 
-  activeTab = signal<"global" | "cashflow">("global");
+  activeTab = signal<DashboardTabId>("global");
 
   // Cashflow tab
   private localDateStr(d: Date): string {
@@ -868,6 +972,120 @@ export class DashboardContentComponent implements OnInit {
     return this.cashflowPanelSpans()[panelId];
   }
 
+  getActiveTabConfig(): DashboardTabJsonConfig {
+    const config = this.tabsConfig.find((tab) => tab.id === this.activeTab());
+    if (!config) {
+      throw new Error(`No tab config found for ${this.activeTab()}`);
+    }
+    return config;
+  }
+
+  getActivePanelOrder(): DashboardPanelId[] {
+    return this.activeTab() === "global"
+      ? this.globalPanelOrder()
+      : this.cashflowPanelOrder();
+  }
+
+  setActiveTab(tabId: DashboardTabId): void {
+    this.activeTab.set(tabId);
+  }
+
+  getPanelComponent(panelId: DashboardPanelId): Type<unknown> {
+    const panelConfig = this.panelsConfig[panelId];
+    return PANEL_COMPONENTS[panelConfig.component];
+  }
+
+  getPanelSpan(panelId: DashboardPanelId): number {
+    if (panelId === "cashflowLine" || panelId === "cashflowPie") {
+      return this.getCashflowPanelSpan(panelId);
+    }
+
+    return this.getGlobalPanelSpan(panelId);
+  }
+
+  getPanelInputs(panelId: DashboardPanelId): Record<string, unknown> {
+    switch (panelId) {
+      case "assets":
+        return {
+          span: this.getGlobalPanelSpan(panelId),
+          assets: this.getAssetsToDisplay(),
+          totalCostPortafoli: this.totalCostPortafoli(),
+          totalValorActual: this.totalValorActual,
+          totalProfitLoss: this.totalProfitLoss,
+          totalProfitLossPercent: this.totalProfitLossPercent,
+          formatCurrency: (value: number) => this.formatCurrency(value),
+          onSpanChange: (value: number) =>
+            this.setGlobalPanelSpan(panelId, value),
+        };
+      case "crypto":
+        return {
+          span: this.getGlobalPanelSpan(panelId),
+          groups: this.cryptoAssetsByPolicyId(),
+          onSpanChange: (value: number) =>
+            this.setGlobalPanelSpan(panelId, value),
+        };
+      case "runway":
+        return {
+          span: this.getGlobalPanelSpan(panelId),
+          estalvis: this.estalvis,
+          costDiari: this.costDiari,
+          runwayDays: this.runwayDays,
+          runwayMonths: this.runwayMonths,
+          runwayYears: this.runwayYears,
+          endDate: this.endDate,
+          onEstalvisChange: (value: number) => {
+            this.estalvis = Number(value);
+            this.calculateRunway();
+          },
+          onCostDiariChange: (value: number) => {
+            this.costDiari = Number(value);
+            this.calculateRunway();
+          },
+          onSpanChange: (value: number) =>
+            this.setGlobalPanelSpan(panelId, value),
+        };
+      case "assetsPie":
+        return {
+          span: this.getGlobalPanelSpan(panelId),
+          chartData: this.pieChartData(),
+          chartOptions: this.pieChartOptions,
+          hasData: this.assets().length > 0,
+          onSpanChange: (value: number) =>
+            this.setGlobalPanelSpan(panelId, value),
+        };
+      case "portfolioTimeline":
+        return {
+          span: this.getGlobalPanelSpan(panelId),
+          periodicity: this.timelinePeriodicity(),
+          chartData: this.portfolioTimelineData(),
+          chartOptions: this.lineChartOptions,
+          hasData: (this.portfolioTimelineData().labels?.length ?? 0) > 0,
+          onPeriodicityChange: (value: "diari" | "setmanal" | "mensual") =>
+            this.timelinePeriodicity.set(value),
+          onSpanChange: (value: number) =>
+            this.setGlobalPanelSpan(panelId, value),
+        };
+      case "cashflowLine":
+        return {
+          span: this.getCashflowPanelSpan(panelId),
+          chartData: this.cashflowChartData(),
+          chartOptions: this.cashflowChartOptions,
+          hasData: (this.cashflowChartData().labels?.length ?? 0) > 0,
+          onSpanChange: (value: number) =>
+            this.setCashflowPanelSpan(panelId, value),
+        };
+      case "cashflowPie":
+        return {
+          span: this.getCashflowPanelSpan(panelId),
+          chartData: this.cashflowPieChartData(),
+          chartOptions: this.cashflowPieChartOptions,
+          hasData: (this.cashflowPieChartData().labels?.length ?? 0) > 0,
+          onSpanChange: (value: number) =>
+            this.setCashflowPanelSpan(panelId, value),
+        };
+    }
+  }
+
   dropGlobalPanels(event: CdkDragDrop<GlobalPanelId[]>): void {
     if (event.previousIndex === event.currentIndex) {
       return;
@@ -888,6 +1106,15 @@ export class DashboardContentComponent implements OnInit {
     moveItemInArray(next, event.previousIndex, event.currentIndex);
     this.cashflowPanelOrder.set(next);
     this.saveLayoutConfig();
+  }
+
+  dropPanels(event: CdkDragDrop<DashboardPanelId[]>): void {
+    if (this.activeTab() === "global") {
+      this.dropGlobalPanels(event as CdkDragDrop<GlobalPanelId[]>);
+      return;
+    }
+
+    this.dropCashflowPanels(event as CdkDragDrop<CashflowPanelId[]>);
   }
 
   ngOnInit() {
