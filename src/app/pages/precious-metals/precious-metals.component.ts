@@ -114,10 +114,7 @@ export class PreciousMetalsComponent {
       return;
     }
 
-    if (
-      this.formulariEdicio.grams < 0 ||
-      this.formulariEdicio.preuCompra < 0
-    ) {
+    if (this.formulariEdicio.grams < 0 || this.formulariEdicio.preuCompra < 0) {
       this.notificationService.warning(
         "Els grams i el preu han de ser positius",
       );
@@ -125,7 +122,9 @@ export class PreciousMetalsComponent {
     }
 
     if (this.metalEditant === "nou") {
-      this.metalService.afegir(this.formulariEdicio as Omit<PreciousMetal, "id">);
+      this.metalService.afegir(
+        this.formulariEdicio as Omit<PreciousMetal, "id">,
+      );
       this.notificationService.success("Metall afegit correctament");
     } else {
       this.metalService.actualitzar(
