@@ -330,13 +330,29 @@ export class DashboardContentComponent implements OnInit {
         },
       },
       datalabels: {
-        display: false,
+        display: true,
+        anchor: "end",
+        align: "end",
+        offset: 8,
+        clamp: true,
+        color: "#ffffff",
+        font: {
+          weight: "bold",
+          size: 11,
+        },
+        formatter: (value: number, context: any) => {
+          const data = context.chart.data.datasets[0].data as number[];
+          const total = data.reduce((a, b) => a + b, 0);
+          if (total <= 0) return "0%";
+          const percentage = (value / total) * 100;
+          return `${percentage.toFixed(1)}%`;
+        },
       },
     },
   };
 
   pieChartData = computed<ChartConfiguration<"pie">["data"]>(() => {
-    const assets = this.assets();
+    const assets = [...this.assets()].sort((a, b) => b.costTotal - a.costTotal);
     return {
       labels: assets.map((a) => `${a.ticker} - ${a.nom}`),
       datasets: [
@@ -824,6 +840,7 @@ export class DashboardContentComponent implements OnInit {
   });
 
   estalvis: number = 0;
+  guanys: number = 0;
   costDiari: number = 70;
   runwayDays: number | null = null;
   runwayMonths: number = 0;
@@ -1091,6 +1108,7 @@ export class DashboardContentComponent implements OnInit {
         return {
           span: this.getGlobalPanelSpan(panelId),
           estalvis: this.estalvis,
+          guanys: this.guanys,
           costDiari: this.costDiari,
           runwayDays: this.runwayDays,
           runwayMonths: this.runwayMonths,
@@ -1099,6 +1117,9 @@ export class DashboardContentComponent implements OnInit {
           onEstalvisChange: (value: number) => {
             this.estalvis = Number(value);
             this.calculateRunway();
+          },
+          onGuanysChange: (value: number) => {
+            this.guanys = Number(value);
           },
           onCostDiariChange: (value: number) => {
             this.costDiari = Number(value);
@@ -1345,6 +1366,7 @@ export class DashboardContentComponent implements OnInit {
 
     // Actualitzar estalvis amb el valor actual del portafoli
     this.estalvis = Math.round(this.totalValorActual);
+    this.guanys = Math.round(this.totalProfitLoss);
     this.calculateRunway();
   }
 

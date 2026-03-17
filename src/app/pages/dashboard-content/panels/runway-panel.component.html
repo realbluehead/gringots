@@ -34,6 +34,23 @@
 
       <div>
         <label
+          for="guanys"
+          class="block text-sm font-medium text-dark-text mb-2"
+        >
+          Guanys (EUR)
+        </label>
+        <input
+          type="number"
+          id="guanys"
+          [ngModel]="guanys"
+          (ngModelChange)="onGuanysChange($event)"
+          placeholder="0.00"
+          class="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-dark-text focus:outline-none focus:ring-2 focus:ring-primary-text"
+        />
+      </div>
+
+      <div>
+        <label
           for="costDiari"
           class="block text-sm font-medium text-dark-text mb-2"
         >
@@ -82,6 +99,38 @@
           <div class="text-center">
             <p class="text-xs text-dark-muted mb-1">data final</p>
             <p class="text-lg font-bold text-primary-text">{{ endDate }}</p>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-dark-text mb-2"
+        >Dies extra (guanys)</label
+      >
+      <div
+        class="px-4 py-2 bg-dark-bg border border-dark-border rounded-lg flex items-end justify-center gap-2"
+      >
+        <div class="text-center">
+          <p class="text-xs text-dark-muted mb-1">dies</p>
+          <p class="text-2xl font-bold text-green-400">
+            {{ guanysDays !== null ? guanysDays : "-" }}
+          </p>
+        </div>
+        @if (guanysDays !== null && guanysDays > 0) {
+          <div class="text-dark-muted pb-1">/</div>
+          <div class="text-center">
+            <p class="text-xs text-dark-muted mb-1">mesos</p>
+            <p class="text-2xl font-bold text-green-400">
+              {{ guanysMonths }}
+            </p>
+          </div>
+          <div class="text-dark-muted pb-1">/</div>
+          <div class="text-center">
+            <p class="text-xs text-dark-muted mb-1">anys</p>
+            <p class="text-2xl font-bold text-green-400">
+              {{ guanysYears }}
+            </p>
           </div>
         }
       </div>
