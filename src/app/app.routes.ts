@@ -63,6 +63,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import("./pages/diari/diari.component").then((m) => m.DiariComponent),
       },
+      {
+        path: "precious-metals",
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import("./pages/precious-metals/precious-metals.component").then(
+            (m) => m.PreciousMetalsComponent,
+          ),
+      },
     ],
   },
   {
