@@ -1089,6 +1089,7 @@ export class DashboardContentComponent implements OnInit {
         return {
           span: this.getGlobalPanelSpan(panelId),
           assets: this.getAssetsToDisplay(),
+          costDiari: this.costDiari,
           totalCostPortafoli: this.totalCostPortafoli(),
           totalValorActual: this.totalValorActual,
           totalProfitLoss: this.totalProfitLoss,

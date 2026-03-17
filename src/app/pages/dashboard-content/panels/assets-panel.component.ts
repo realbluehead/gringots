@@ -23,6 +23,7 @@ interface AssetView {
 export class AssetsPanelComponent {
   @Input({ required: true }) span!: number;
   @Input({ required: true }) assets!: AssetView[];
+  @Input({ required: true }) costDiari!: number;
   @Input({ required: true }) totalCostPortafoli!: number;
   @Input({ required: true }) totalValorActual!: number;
   @Input({ required: true }) totalProfitLoss!: number;
@@ -31,4 +32,40 @@ export class AssetsPanelComponent {
   @Input({ required: true }) onSpanChange!: (value: number) => void;
 
   spanOptions = [1, 2, 3, 4];
+
+  getRunwayLabel(asset: AssetView): string {
+    const baseDays = this.toDays(asset.costTotal);
+    if (baseDays === null) {
+      return "-";
+    }
+
+    if (asset.valorActual === undefined) {
+      return `${baseDays} / -`;
+    }
+
+    const extraDays = this.toDays(asset.valorActual - asset.costTotal);
+    return `${baseDays} / ${this.formatSignedDays(extraDays ?? 0)}`;
+  }
+
+  getTotalRunwayLabel(): string {
+    const baseDays = this.toDays(this.totalCostPortafoli);
+    if (baseDays === null) {
+      return "-";
+    }
+
+    const extraDays = this.toDays(this.totalProfitLoss);
+    return `${baseDays} / ${this.formatSignedDays(extraDays ?? 0)}`;
+  }
+
+  private toDays(value: number): number | null {
+    if (this.costDiari <= 0) {
+      return null;
+    }
+
+    return Math.round(value / this.costDiari);
+  }
+
+  private formatSignedDays(value: number): string {
+    return value > 0 ? `+${value}` : `${value}`;
+  }
 }

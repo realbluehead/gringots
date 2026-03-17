@@ -55,6 +55,11 @@
             <th
               class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
             >
+              RW
+            </th>
+            <th
+              class="text-right px-4 py-3 text-sm font-semibold text-dark-text"
+            >
               P&L
             </th>
           </tr>
@@ -94,6 +99,11 @@
                 } @else {
                   <span class="text-dark-muted">-</span>
                 }
+              </td>
+              <td
+                class="px-4 py-3 text-sm text-right font-semibold text-dark-text"
+              >
+                {{ getRunwayLabel(asset) }}
               </td>
               <td class="px-4 py-3 text-sm text-right font-semibold">
                 @if (asset.profitLoss !== undefined) {
@@ -139,6 +149,11 @@
               } @else {
                 <span class="text-dark-muted">-</span>
               }
+            </td>
+            <td
+              class="px-4 py-3 text-sm text-right font-bold text-primary-text"
+            >
+              {{ getTotalRunwayLabel() }}
             </td>
             <td class="px-4 py-3 text-sm text-right font-bold">
               @if (totalProfitLoss !== 0) {
