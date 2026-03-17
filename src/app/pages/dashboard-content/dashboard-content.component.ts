@@ -39,6 +39,8 @@ import {
   Legend,
   ArcElement,
 } from "chart.js";
+import { SankeyController, Flow } from "chartjs-chart-sankey";
+import { SankeyDataPoint } from "./panels/cashflow-sankey-panel.component";
 import { AssetsPanelComponent } from "./panels/assets-panel.component";
 import { CryptoPanelComponent } from "./panels/crypto-panel.component";
 import { RunwayPanelComponent } from "./panels/runway-panel.component";
@@ -46,6 +48,7 @@ import { AssetsPiePanelComponent } from "./panels/assets-pie-panel.component";
 import { PortfolioTimelinePanelComponent } from "./panels/portfolio-timeline-panel.component";
 import { CashflowLinePanelComponent } from "./panels/cashflow-line-panel.component";
 import { CashflowPiePanelComponent } from "./panels/cashflow-pie-panel.component";
+import { CashflowSankeyPanelComponent } from "./panels/cashflow-sankey-panel.component";
 
 // Registrar components de Chart.js
 ChartJS.register(
@@ -61,6 +64,8 @@ ChartJS.register(
   Tooltip,
   Legend,
   ArcElement,
+  SankeyController,
+  Flow,
 );
 
 interface Asset {
@@ -81,7 +86,7 @@ type GlobalPanelId =
   | "runway"
   | "assetsPie"
   | "portfolioTimeline";
-type CashflowPanelId = "cashflowLine" | "cashflowPie";
+type CashflowPanelId = "cashflowLine" | "cashflowPie" | "cashflowSankey";
 type DashboardTabId = "global" | "cashflow";
 type DashboardPanelId = GlobalPanelId | CashflowPanelId;
 type PanelComponentKey =
@@ -91,7 +96,8 @@ type PanelComponentKey =
   | "assetsPiePanel"
   | "portfolioTimelinePanel"
   | "cashflowLinePanel"
-  | "cashflowPiePanel";
+  | "cashflowPiePanel"
+  | "cashflowSankeyPanel";
 
 type GlobalPanelSpan = 1 | 2 | 3 | 4;
 type CashflowPanelSpan = 1 | 2 | 3;
@@ -125,6 +131,7 @@ const PANEL_COMPONENTS: Record<PanelComponentKey, Type<unknown>> = {
   portfolioTimelinePanel: PortfolioTimelinePanelComponent,
   cashflowLinePanel: CashflowLinePanelComponent,
   cashflowPiePanel: CashflowPiePanelComponent,
+  cashflowSankeyPanel: CashflowSankeyPanelComponent,
 };
 
 // JSON-like dashboard config so tabs/panels can come from persisted or remote config later.
@@ -174,6 +181,12 @@ const DASHBOARD_PANELS_CONFIG: Record<
     component: "cashflowPiePanel",
     maxSpan: 3,
   },
+  cashflowSankey: {
+    id: "cashflowSankey",
+    label: "Flux de despeses",
+    component: "cashflowSankeyPanel",
+    maxSpan: 3,
+  },
 };
 
 const DASHBOARD_TABS_CONFIG: DashboardTabJsonConfig[] = [
@@ -187,7 +200,7 @@ const DASHBOARD_TABS_CONFIG: DashboardTabJsonConfig[] = [
     id: "cashflow",
     label: "Cashflow",
     maxColumns: 3,
-    panelIds: ["cashflowLine", "cashflowPie"],
+    panelIds: ["cashflowLine", "cashflowPie", "cashflowSankey"],
   },
 ];
 
@@ -243,10 +256,12 @@ export class DashboardContentComponent implements OnInit {
   cashflowPanelOrder = signal<CashflowPanelId[]>([
     "cashflowLine",
     "cashflowPie",
+    "cashflowSankey",
   ]);
   cashflowPanelSpans = signal<Record<CashflowPanelId, CashflowPanelSpan>>({
     cashflowLine: 2,
     cashflowPie: 1,
+    cashflowSankey: 3,
   });
 
   // Crypto assets
@@ -283,7 +298,7 @@ export class DashboardContentComponent implements OnInit {
 
                 return {
                   text: `${label} (${percentage}%)`,
-                  fillStyle: (dataset.backgroundColor as string[])[i],
+                  fillStyle: ((dataset as any).backgroundColor as string[])[i],
                   strokeStyle: dataset.borderColor as string,
                   lineWidth: dataset.borderWidth as number,
                   fontColor: "#f1f5f9",
@@ -558,6 +573,39 @@ export class DashboardContentComponent implements OnInit {
     };
   });
 
+  cashflowSankeyChartData = computed<{
+    records: SankeyDataPoint[];
+    colorMap: Record<string, string>;
+  }>(() => {
+    const entries = this.dailyEntryService.obtenirTots()();
+    const categories = this.categoryService.obtenirTotes()();
+    const from = this.cashflowDateFrom();
+    const to = this.cashflowDateTo();
+
+    const filtered = entries.filter((e) => {
+      const ds = this.localDateStr(new Date(e.data));
+      return e.tipus === "despesa" && ds >= from && ds <= to;
+    });
+
+    const catMap = new Map<string, number>();
+    filtered.forEach((e) => {
+      const key = e.categoriaId ?? "__sense_categoria__";
+      catMap.set(key, (catMap.get(key) ?? 0) + e.import);
+    });
+
+    const records: SankeyDataPoint[] = [];
+    const colorMap: Record<string, string> = { Despeses: "#ef4444" };
+
+    catMap.forEach((total, catId) => {
+      const cat = categories.find((c) => c.id === catId);
+      const catName = cat?.nom ?? "Sense categoria";
+      records.push({ from: "Despeses", to: catName, flow: total });
+      colorMap[catName] = cat?.color ?? "#6b7280";
+    });
+
+    return { records, colorMap };
+  });
+
   cashflowPieChartOptions: ChartConfiguration<"pie">["options"] = {
     responsive: true,
     maintainAspectRatio: false,
@@ -582,7 +630,7 @@ export class DashboardContentComponent implements OnInit {
                   total > 0 ? ((value / total) * 100).toFixed(1) : "0";
                 return {
                   text: `${label} (${pct}%)`,
-                  fillStyle: (dataset.backgroundColor as string[])[i],
+                  fillStyle: ((dataset as any).backgroundColor as string[])[i],
                   strokeStyle: dataset.borderColor as string,
                   lineWidth: dataset.borderWidth as number,
                   fontColor: "#f1f5f9",
@@ -867,14 +915,19 @@ export class DashboardContentComponent implements OnInit {
       }
 
       const cashflowOrder = parsed.cashflowPanelOrder;
-      if (
-        Array.isArray(cashflowOrder) &&
-        cashflowOrder.length === 2 &&
-        ["cashflowLine", "cashflowPie"].every((id) =>
-          cashflowOrder.includes(id as CashflowPanelId),
-        )
-      ) {
-        this.cashflowPanelOrder.set(cashflowOrder as CashflowPanelId[]);
+      if (Array.isArray(cashflowOrder)) {
+        const ALL_CASHFLOW_IDS: CashflowPanelId[] = [
+          "cashflowLine",
+          "cashflowPie",
+          "cashflowSankey",
+        ];
+        const validOrder = cashflowOrder.filter((id): id is CashflowPanelId =>
+          ALL_CASHFLOW_IDS.includes(id as CashflowPanelId),
+        );
+        ALL_CASHFLOW_IDS.forEach((id) => {
+          if (!validOrder.includes(id)) validOrder.push(id);
+        });
+        this.cashflowPanelOrder.set(validOrder);
       }
 
       const globalSpans = parsed.globalPanelSpans;
@@ -933,6 +986,12 @@ export class DashboardContentComponent implements OnInit {
             cashflowSpans.cashflowPie === 3
               ? cashflowSpans.cashflowPie
               : this.cashflowPanelSpans().cashflowPie,
+          cashflowSankey:
+            cashflowSpans.cashflowSankey === 1 ||
+            cashflowSpans.cashflowSankey === 2 ||
+            cashflowSpans.cashflowSankey === 3
+              ? cashflowSpans.cashflowSankey
+              : this.cashflowPanelSpans().cashflowSankey,
         });
       }
     } catch (error) {
@@ -996,7 +1055,11 @@ export class DashboardContentComponent implements OnInit {
   }
 
   getPanelSpan(panelId: DashboardPanelId): number {
-    if (panelId === "cashflowLine" || panelId === "cashflowPie") {
+    if (
+      panelId === "cashflowLine" ||
+      panelId === "cashflowPie" ||
+      panelId === "cashflowSankey"
+    ) {
       return this.getCashflowPanelSpan(panelId);
     }
 
@@ -1080,6 +1143,15 @@ export class DashboardContentComponent implements OnInit {
           chartData: this.cashflowPieChartData(),
           chartOptions: this.cashflowPieChartOptions,
           hasData: (this.cashflowPieChartData().labels?.length ?? 0) > 0,
+          onSpanChange: (value: number) =>
+            this.setCashflowPanelSpan(panelId, value),
+        };
+      case "cashflowSankey":
+        return {
+          span: this.getCashflowPanelSpan(panelId),
+          sankeyData: this.cashflowSankeyChartData().records,
+          colorMap: this.cashflowSankeyChartData().colorMap,
+          hasData: this.cashflowSankeyChartData().records.length > 0,
           onSpanChange: (value: number) =>
             this.setCashflowPanelSpan(panelId, value),
         };
