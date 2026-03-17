@@ -10,72 +10,96 @@
       </div>
 
       <div class="flex items-center gap-8">
-        <!-- Navigation Menu -->
-        <nav class="flex items-center space-x-6">
-          <a
-            routerLink="/dashboard"
-            routerLinkActive="text-primary-text border-b-2 border-primary-text"
-            class="text-dark-muted hover:text-dark-text transition-colors pb-1 font-medium"
-          >
-            Dashboard
-          </a>
-          <a
-            routerLink="/events"
-            routerLinkActive="text-primary-text border-b-2 border-primary-text"
-            class="text-dark-muted hover:text-dark-text transition-colors pb-1 font-medium"
-          >
-            Events
-          </a>
-          <a
-            routerLink="/settings"
-            routerLinkActive="text-primary-text border-b-2 border-primary-text"
-            class="text-dark-muted hover:text-dark-text transition-colors pb-1 font-medium"
-          >
-            Settings
-          </a>
-          <a
-            routerLink="/diari"
-            routerLinkActive="text-primary-text border-b-2 border-primary-text"
-            class="text-dark-muted hover:text-dark-text transition-colors pb-1 font-medium"
-          >
-            Diari
-          </a>
-        </nav>
+        @if (isAuthenticated()) {
+          <!-- Navigation Menu -->
+          <nav class="flex items-center space-x-6">
+            <a
+              routerLink="/dashboard"
+              routerLinkActive="text-primary-text border-b-2 border-primary-text"
+              class="text-dark-muted hover:text-dark-text transition-colors pb-1 font-medium"
+            >
+              Dashboard
+            </a>
+            <a
+              routerLink="/events"
+              routerLinkActive="text-primary-text border-b-2 border-primary-text"
+              class="text-dark-muted hover:text-dark-text transition-colors pb-1 font-medium"
+            >
+              Events
+            </a>
+            <a
+              routerLink="/settings"
+              routerLinkActive="text-primary-text border-b-2 border-primary-text"
+              class="text-dark-muted hover:text-dark-text transition-colors pb-1 font-medium"
+            >
+              Settings
+            </a>
+            <a
+              routerLink="/diari"
+              routerLinkActive="text-primary-text border-b-2 border-primary-text"
+              class="text-dark-muted hover:text-dark-text transition-colors pb-1 font-medium"
+            >
+              Diari
+            </a>
+          </nav>
 
-        <!-- Export/Import Buttons -->
-        <div class="flex items-center gap-2">
-          <button
-            (click)="exportar()"
-            class="flex items-center gap-2 px-3 py-1.5 bg-dark-bg hover:bg-dark-bg/80 border border-dark-border rounded-lg text-dark-text text-sm font-medium transition-colors"
-            title="Exportar dades"
+          <!-- Export/Import Buttons -->
+          <div class="flex items-center gap-2">
+            <button
+              (click)="exportar()"
+              class="flex items-center gap-2 px-3 py-1.5 bg-dark-bg hover:bg-dark-bg/80 border border-dark-border rounded-lg text-dark-text text-sm font-medium transition-colors"
+              title="Exportar dades"
+            >
+              <lucide-angular
+                [img]="Download"
+                [size]="16"
+                class="text-white"
+              ></lucide-angular>
+              <span>Exportar</span>
+            </button>
+            <button
+              (click)="fileInput.click()"
+              class="flex items-center gap-2 px-3 py-1.5 bg-dark-bg hover:bg-dark-bg/80 border border-dark-border rounded-lg text-dark-text text-sm font-medium transition-colors"
+              title="Importar dades"
+            >
+              <lucide-angular
+                [img]="Upload"
+                [size]="16"
+                class="text-white"
+              ></lucide-angular>
+              <span>Importar</span>
+            </button>
+            <input
+              #fileInput
+              type="file"
+              accept=".json"
+              (change)="importar($event)"
+              class="hidden"
+            />
+          </div>
+
+          <div class="flex items-center gap-3 pl-2">
+            <div class="text-right">
+              <p class="text-sm font-semibold text-dark-text">
+                {{ user()?.name }}
+              </p>
+              <p class="text-xs text-dark-muted">{{ user()?.email }}</p>
+            </div>
+            <button
+              (click)="logout()"
+              class="px-3 py-1.5 border border-dark-border rounded-lg text-sm font-medium text-dark-text hover:bg-dark-bg transition-colors"
+            >
+              Sortir
+            </button>
+          </div>
+        } @else {
+          <a
+            routerLink="/login"
+            class="px-4 py-2 border border-dark-border rounded-lg text-sm font-medium text-dark-text hover:bg-dark-bg transition-colors"
           >
-            <lucide-angular
-              [img]="Download"
-              [size]="16"
-              class="text-white"
-            ></lucide-angular>
-            <span>Exportar</span>
-          </button>
-          <button
-            (click)="fileInput.click()"
-            class="flex items-center gap-2 px-3 py-1.5 bg-dark-bg hover:bg-dark-bg/80 border border-dark-border rounded-lg text-dark-text text-sm font-medium transition-colors"
-            title="Importar dades"
-          >
-            <lucide-angular
-              [img]="Upload"
-              [size]="16"
-              class="text-white"
-            ></lucide-angular>
-            <span>Importar</span>
-          </button>
-          <input
-            #fileInput
-            type="file"
-            accept=".json"
-            (change)="importar($event)"
-            class="hidden"
-          />
-        </div>
+            Login
+          </a>
+        }
       </div>
     </div>
   </div>

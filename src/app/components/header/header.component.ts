@@ -1,6 +1,7 @@
 import { Component, inject } from "@angular/core";
-import { RouterLink, RouterLinkActive } from "@angular/router";
+import { Router, RouterLink, RouterLinkActive } from "@angular/router";
 import { ExportImportService } from "../../services/export-import.service";
+import { AuthService } from "../../services/auth.service";
 import { LucideAngularModule, Download, Upload } from "lucide-angular";
 
 @Component({
@@ -11,10 +12,14 @@ import { LucideAngularModule, Download, Upload } from "lucide-angular";
 })
 export class HeaderComponent {
   private exportImportService = inject(ExportImportService);
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
   // Lucide icons
   readonly Download = Download;
   readonly Upload = Upload;
+  readonly user = this.authService.user;
+  readonly isAuthenticated = this.authService.isAuthenticated;
 
   exportar(): void {
     this.exportImportService.exportarDades();
@@ -36,5 +41,10 @@ export class HeaderComponent {
           input.value = "";
         });
     }
+  }
+
+  logout(): void {
+    this.authService.signOut();
+    this.router.navigateByUrl("/login");
   }
 }

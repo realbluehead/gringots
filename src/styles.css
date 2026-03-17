@@ -126,3 +126,12 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 input[type="date"] {
   color-scheme: dark;
 }
+
+/* Keep Google Identity prompt clickable above app overlays. */
+#credential_picker_container,
+.g_id_signin,
+iframe[title*="Google"],
+iframe[id*="gsi_"] {
+  z-index: 2147483647 !important;
+  pointer-events: auto !important;
+}
